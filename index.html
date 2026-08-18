@@ -293,9 +293,9 @@ nav.tabs .badge{position:absolute;top:0;right:calc(50% - 24px);background:var(--
     <input type="text" id="set-name" placeholder="e.g. Neema Minja">
     <label class="fl">Campus</label>
     <select id="set-campus"></select>
-    <label class="fl">Sync link (from your Principal / admin)</label>
+    <label class="fl">Sync link (already set up — leave as is)</label>
     <input type="url" id="set-url" placeholder="https://script.google.com/macros/s/…/exec">
-    <div class="small" style="margin-top:6px">Paste this once. Records save on your phone even with no internet, and upload to the school system when you tap Sync.</div>
+    <div class="small" style="margin-top:6px">Already connected to the school system. Records save on your phone even with no internet and upload when you tap Sync.</div>
     <button class="btn block" style="margin-top:14px" onclick="saveSettings(true)">Save settings</button>
   </div>
   <div class="card">
@@ -353,7 +353,9 @@ const ADMIN_STEPS = `<div class="note alert" style="margin-top:10px"><b>Tier 3 �
 
 /* ================= STATE ================= */
 const LS = {set:'sla_bt_settings', q:'sla_bt_queue', hist:'sla_bt_synced'};
+const DEFAULT_SYNC_URL = 'https://script.google.com/macros/s/AKfycbzwTu01u9msknoqKAQ-GTi1Hj7_wf3cE6rfwvI4Bt1zqpa5jgGY3WZ16s50FPSpV3kn/exec';
 let settings = load(LS.set, {name:'', campus:'', url:''});
+if(!settings.url) settings.url = DEFAULT_SYNC_URL;
 let queue = load(LS.q, []);
 let hist = load(LS.hist, []);
 let inc = null, rec = null, incStep = 1, recStep = 1;

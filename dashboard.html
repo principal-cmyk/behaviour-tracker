@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Silverleaf Behaviour &amp; Recognition Dashboard</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+.viz-root, :root{
+  color-scheme: light;
+  --surface-1:#fcfcfb; --plane:#f9f9f7;
+  --ink:#0b0b0b; --ink-2:#52514e; --ink-3:#898781;
+  --grid:#e1e0d9; --axisline:#c3c2b7; --border:rgba(11,11,11,.10);
+  --inc:#2a5da8;            /* incidents entity — Silverleaf Electric Blue, chart step */
+  --pos:#c48200;            /* recognitions entity — Silverleaf Gold, chart step */
+  --mag:#2a5da8;            /* single-hue magnitude bars — brand blue */
+  --mag2:#1c4585;
+  --st-warn:#fab219; --st-serious:#ec835a; --st-crit:#d03b3b; --st-good:#0ca30c;
+  --tier1:#e78d81; --tier2:#cc473c; --tier3:#9c2620;  /* validated ordinal severity ramp */
+  --green:#002368; --gold:#FFC952; --gold-light:#FFF7E5; --lblue:#80BFEC;
+}
+@media (prefers-color-scheme: dark){
+  :root:where(:not([data-theme="light"])){
+    color-scheme: dark;
+    --surface-1:#1a1a19; --plane:#0d0d0d;
+    --ink:#ffffff; --ink-2:#c3c2b7; --ink-3:#898781;
+    --grid:#2c2c2a; --axisline:#383835; --border:rgba(255,255,255,.10);
+    --inc:#5b8dd9; --pos:#c98500; --mag:#5b8dd9; --mag2:#3f6fc0;
+  }
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--plane);color:var(--ink);
+  font:14px/1.5 Montserrat,Helvetica,system-ui,-apple-system,sans-serif;}
+header{background:var(--green);color:#fff;padding:16px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+header .logo{width:36px;height:46px;color:#fff;display:flex;align-items:center;}
+header .logo svg{width:100%;height:100%;}
+header .wordmark{font-family:Georgia,serif;font-weight:700;font-size:20px;letter-spacing:.3px;line-height:1.1;}
+header .wordmark small{display:block;font-family:Montserrat,Helvetica,sans-serif;font-weight:600;font-size:10px;letter-spacing:4px;opacity:.85;}
+header h1{font-size:18px;margin:0;}
+header .sub{font-size:12.5px;opacity:.85;}
+#updated{margin-left:auto;font-size:12px;opacity:.9;}
+.wrap{max-width:1180px;margin:0 auto;padding:18px;}
+.card{background:var(--surface-1);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:16px;}
+.card h2{font-size:13px;margin:0 0 12px;color:var(--ink-2);text-transform:uppercase;letter-spacing:.7px;}
+.connect{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.connect input{flex:1;min-width:260px;padding:10px 12px;border:1.5px solid var(--grid);border-radius:9px;font-size:14px;background:var(--surface-1);color:var(--ink);}
+button{font-family:inherit;cursor:pointer;}
+.btn{border:none;border-radius:9px;padding:10px 16px;font-size:14px;font-weight:700;color:#fff;background:var(--green);}
+.btn.ghost{background:transparent;color:var(--ink-2);border:1.5px solid var(--grid);font-weight:600;}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px;}
+.filters .fchip{border:1.5px solid var(--grid);background:var(--surface-1);color:var(--ink-2);
+  border-radius:99px;padding:7px 14px;font-size:13px;font-weight:600;}
+.filters .fchip.on{background:var(--green);border-color:var(--green);color:#fff;}
+.filters select{padding:8px 10px;border:1.5px solid var(--grid);border-radius:9px;font-size:13px;background:var(--surface-1);color:var(--ink);}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px;}
+.kpi{background:var(--surface-1);border:1px solid var(--border);border-radius:14px;padding:14px 16px;}
+.kpi b{display:block;font-size:30px;line-height:1.15;}
+.kpi small{color:var(--ink-3);font-size:12px;}
+.kpi .icon{float:right;font-size:18px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:860px){.grid2{grid-template-columns:1fr;}}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-2);margin-bottom:8px;}
+.legend span{display:inline-flex;align-items:center;gap:6px;}
+.legend i{width:10px;height:10px;border-radius:3px;display:inline-block;}
+svg text{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;}
+.axis{fill:var(--ink-3);font-size:11px;}
+.dlabel{fill:var(--ink-2);font-size:11px;font-weight:600;}
+table{width:100%;border-collapse:collapse;font-size:13.5px;}
+th{color:var(--ink-3);font-weight:600;text-align:left;padding:7px 8px;border-bottom:1px solid var(--grid);font-size:12px;text-transform:uppercase;letter-spacing:.4px;}
+td{padding:8px;border-bottom:1px solid var(--grid);}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;}
+.pill{display:inline-flex;align-items:center;gap:5px;border-radius:99px;padding:2px 9px;font-size:11.5px;font-weight:700;}
+.pill.t1{background:color-mix(in srgb,var(--st-warn) 18%, transparent);color:#8a5f00;}
+.pill.t2{background:color-mix(in srgb,var(--st-serious) 18%, transparent);color:#9c4218;}
+.pill.t3{background:color-mix(in srgb,var(--st-crit) 15%, transparent);color:var(--st-crit);}
+.shout{border-left:4px solid var(--gold);background:color-mix(in srgb,var(--gold) 10%, var(--surface-1));
+  border-radius:10px;padding:10px 14px;margin-bottom:8px;}
+.shout b{font-size:14.5px;}
+.shout .meta{color:var(--ink-3);font-size:12px;}
+#tooltip{position:fixed;pointer-events:none;background:var(--ink);color:var(--plane);
+  padding:7px 11px;border-radius:8px;font-size:12.5px;opacity:0;transition:opacity .12s;z-index:50;max-width:280px;}
+.empty{color:var(--ink-3);padding:14px 4px;}
+.tablink{font-size:12px;color:var(--ink-3);background:none;border:none;text-decoration:underline;float:right;}
+.certgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:800px){.certgrid{grid-template-columns:1fr;}}
+.cert{border:3px double var(--green);border-radius:12px;padding:24px 22px;text-align:center;background:#fff;color:#0b0b0b;page-break-inside:avoid;position:relative;overflow:hidden;}
+.cert::after{content:"";position:absolute;right:-30px;bottom:-30px;width:120px;height:120px;
+  background:var(--gold-light);border-radius:50%;z-index:0;}
+.cert>*{position:relative;z-index:1;}
+.cert .mark{width:34px;height:44px;color:var(--green);margin:0 auto 6px;}
+.cert .mark svg{width:100%;height:100%;}
+.cert .brand{font-family:Georgia,serif;font-weight:700;font-size:17px;color:var(--green);}
+.cert .brand small{display:block;font-family:Montserrat,Helvetica,sans-serif;font-weight:600;font-size:9px;letter-spacing:4px;color:#818283;}
+.cert .ttl{color:var(--green);font-weight:800;letter-spacing:2px;font-size:11.5px;text-transform:uppercase;margin-top:10px;}
+.cert .name{font-family:Georgia,serif;font-size:27px;font-weight:700;margin:10px 0 2px;color:var(--green);}
+.cert .cls{color:#818283;font-size:13px;}
+.cert .why{margin:12px 0;font-size:14px;color:#52514e;}
+.cert .pts{display:inline-block;font-size:14px;font-weight:700;color:var(--green);background:var(--gold);border-radius:99px;padding:5px 16px;}
+.cert .tag{margin-top:10px;font-size:11px;color:#818283;font-style:italic;}
+.cert .sig{margin-top:18px;display:flex;justify-content:space-between;font-size:11.5px;color:#818283;}
+.cert .sig span{border-top:1px solid #c3c2b7;padding-top:4px;width:44%;}
+@media print{
+  header,.filters,.card.no-print,.connect,.btn,.tablink{display:none !important;}
+  body{background:#fff;} .card{border:none;}
+  .print-only-certs .card:not(#certcard){display:none;}
+}
+</style>
+</head>
+<body class="viz-root">
+<header>
+  <div class="logo"><svg viewBox="268 243 297 383" xmlns="http://www.w3.org/2000/svg" fill="currentColor" aria-label="Silverleaf Academy"><path d="m408.57,247.42v160.1l-128.39-128.39c16.26-9.47,59.43-30.16,128.39-31.7Z"/><polygon points="408.57 430.64 408.57 533.57 272.84 397.84 272.84 294.89 408.57 430.64"/><path d="m272.84,420.93l135.72,135.72v65.15c-31.4-4.23-83.02-31.23-108.59-77.96-18.49-33.79-27.13-72.06-27.13-110.57v-12.34Z"/><path d="m560.62,420.93l-135.72,135.72v65.15c31.4-4.23,83.02-31.23,108.59-77.96,18.49-33.79,27.13-72.06,27.13-110.57v-12.34Z"/><path d="m553.33,279.14l-128.43,128.45v-160.17c69.01,1.54,112.21,22.25,128.43,31.72Z"/><polygon points="560.62 294.97 560.62 397.9 424.9 533.62 424.9 430.69 560.62 294.97"/></svg></div>
+  <div class="wordmark">Silverleaf<small>ACADEMY</small></div>
+  <div style="border-left:1px solid rgba(255,255,255,.3);padding-left:14px"><h1>Behaviour &amp; Recognition Dashboard</h1><div class="sub">All campuses · The Future Starts Here</div></div>
+  <div id="updated"></div>
+</header>
+<div class="wrap">
+
+<div class="card no-print" id="connectcard">
+  <h2>Connect to school data</h2>
+  <div class="connect">
+    <input type="url" id="api" placeholder="Paste the sync link (https://script.google.com/macros/s/…/exec)">
+    <button class="btn" onclick="connect()">Load data</button>
+    <button class="btn ghost" onclick="demo()">Preview with sample data</button>
+  </div>
+  <div id="connmsg" style="margin-top:8px;font-size:12.5px;color:var(--ink-3)"></div>
+</div>
+
+<div id="dash" style="display:none">
+  <div class="filters no-print">
+    <button class="fchip" data-r="week" onclick="setRange('week')">This week</button>
+    <button class="fchip" data-r="7" onclick="setRange('7')">Last 7 days</button>
+    <button class="fchip" data-r="30" onclick="setRange('30')">Last 30 days</button>
+    <button class="fchip on" data-r="all" onclick="setRange('all')">Term to date</button>
+    <select id="f-campus" onchange="render()"><option value="">All campuses</option></select>
+    <select id="f-class" onchange="render()"><option value="">All classes</option></select>
+    <button class="btn ghost" style="margin-left:auto" onclick="window.print()">🖨 Print</button>
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="grid2">
+    <div class="card"><h2>Daily trend <button class="tablink" onclick="tog('t-trend')">table</button></h2>
+      <div class="legend"><span><i style="background:var(--inc)"></i>Incidents</span><span><i style="background:var(--pos)"></i>Recognitions</span></div>
+      <div id="c-trend"></div><div id="t-trend" style="display:none"></div></div>
+    <div class="card"><h2>Campus comparison <button class="tablink" onclick="tog('t-campus')">table</button></h2>
+      <div class="legend"><span><i style="background:var(--inc)"></i>Incidents</span><span><i style="background:var(--pos)"></i>Recognitions</span></div>
+      <div id="c-campus"></div><div id="t-campus" style="display:none"></div>
+      <div style="font-size:11.5px;color:var(--ink-3);margin-top:6px">Note: campuses differ in enrolment — compare each campus with its own past weeks, not only with each other.</div></div>
+    <div class="card"><h2>Tier mix by campus <button class="tablink" onclick="tog('t-tier')">table</button></h2>
+      <div class="legend"><span><i style="background:var(--tier1)"></i>Tier 1 · low</span><span><i style="background:var(--tier2)"></i>Tier 2 · medium</span><span><i style="background:var(--tier3)"></i>Tier 3 · referral</span></div>
+      <div id="c-tier"></div><div id="t-tier" style="display:none"></div></div>
+    <div class="card"><h2>Top behaviours <button class="tablink" onclick="tog('t-beh')">table</button></h2>
+      <div id="c-beh"></div><div id="t-beh" style="display:none"></div></div>
+    <div class="card"><h2>Interventions applied most <button class="tablink" onclick="tog('t-iv')">table</button></h2>
+      <div id="c-iv"></div><div id="t-iv" style="display:none"></div></div>
+    <div class="card"><h2>Recognition by Silverleaf value <button class="tablink" onclick="tog('t-val')">table</button></h2>
+      <div id="c-val"></div><div id="t-val" style="display:none"></div></div>
+  </div>
+
+  <div class="grid2">
+    <div class="card"><h2>⚠️ Watchlist — 3+ incidents in period</h2><div id="watch"></div></div>
+    <div class="card"><h2>⭐ Merit leaderboard</h2><div id="leader"></div></div>
+  </div>
+
+  <div class="card"><h2>📣 Assembly shout-outs — top recognitions in period</h2><div id="shouts"></div></div>
+
+  <div class="card" id="certcard"><h2>🏆 Certificates — top merit student per class (period)
+    <button class="tablink no-print" onclick="window.print()">print certificates</button></h2>
+    <div class="small no-print" style="color:var(--ink-3);font-size:12.5px;margin-bottom:12px">Tip: choose a campus above, then print this section for award assemblies.</div>
+    <div class="certgrid" id="certs"></div>
+  </div>
+</div>
+</div>
+<div id="tooltip"></div>
+
+<script>
+"use strict";
+const LOGOMARK = "<svg viewBox=\"268 243 297 383\" xmlns=\"http://www.w3.org/2000/svg\" fill=\"currentColor\" aria-label=\"Silverleaf Academy\"><path d=\"m408.57,247.42v160.1l-128.39-128.39c16.26-9.47,59.43-30.16,128.39-31.7Z\"/><polygon points=\"408.57 430.64 408.57 533.57 272.84 397.84 272.84 294.89 408.57 430.64\"/><path d=\"m272.84,420.93l135.72,135.72v65.15c-31.4-4.23-83.02-31.23-108.59-77.96-18.49-33.79-27.13-72.06-27.13-110.57v-12.34Z\"/><path d=\"m560.62,420.93l-135.72,135.72v65.15c31.4-4.23,83.02-31.23,108.59-77.96,18.49-33.79,27.13-72.06,27.13-110.57v-12.34Z\"/><path d=\"m553.33,279.14l-128.43,128.45v-160.17c69.01,1.54,112.21,22.25,128.43,31.72Z\"/><polygon points=\"560.62 294.97 560.62 397.9 424.9 533.62 424.9 430.69 560.62 294.97\"/></svg>";
+let DATA = null, range = 'all';
+const CAMPUSES = ['Usa River','Arusha Modern','Boma','Ilboru','Kijenge'];
+const $ = id => document.getElementById(id);
+const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function store(k,v){ try{ localStorage.setItem(k,v);}catch(e){} }
+function unstore(k){ try{ return localStorage.getItem(k);}catch(e){ return null; } }
+function tog(id){ const e=$(id); e.style.display = e.style.display==='none'?'':'none'; }
+
+/* ---------- connect ---------- */
+async function connect(){
+  const url = $('api').value.trim();
+  if(!url){ $('connmsg').textContent = 'Paste the sync link first.'; return; }
+  $('connmsg').textContent = 'Loading…';
+  try{
+    const res = await fetch(url + (url.includes('?')?'&':'?') + 'action=data', {redirect:'follow'});
+    const j = await res.json();
+    if(!j.ok) throw new Error(j.error||'bad reply');
+    DATA = j; store('sla_dash_api', url);
+    $('connmsg').textContent = '';
+    $('updated').textContent = 'Data updated ' + (j.updated||'');
+    $('connectcard').style.display = 'none';
+    boot();
+  }catch(e){
+    $('connmsg').textContent = '❌ Could not load: ' + e.message + ' — check the link, or that the web app is deployed with access "Anyone".';
+  }
+}
+function demo(){
+  DATA = makeDemo();
+  $('updated').textContent = 'SAMPLE DATA — for preview only';
+  boot();
+}
+function boot(){
+  $('dash').style.display = '';
+  const cls = [...new Set(DATA.incidents.concat(DATA.recognitions).map(r=>r.Class))].sort();
+  $('f-campus').innerHTML = '<option value="">All campuses</option>' + CAMPUSES.map(c=>`<option>${c}</option>`).join('');
+  $('f-class').innerHTML = '<option value="">All classes</option>' + cls.map(c=>`<option>${esc(c)}</option>`).join('');
+  render();
+}
+
+/* ---------- filters ---------- */
+function setRange(r){
+  range = r;
+  document.querySelectorAll('.fchip').forEach(b=>b.classList.toggle('on', b.dataset.r===r));
+  render();
+}
+function cutoff(){
+  const now = new Date();
+  if(range==='all') return '0000';
+  if(range==='week'){ const m=new Date(now); m.setDate(now.getDate()-((now.getDay()+6)%7)); return iso(m); }
+  const d=new Date(now); d.setDate(now.getDate()-(+range)); return iso(d);
+}
+const iso = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+function filt(rows){
+  const c = cutoff(), fc = $('f-campus').value, fk = $('f-class').value;
+  return rows.filter(r => String(r.Date)>=c && (!fc||r.Campus===fc) && (!fk||r.Class===fk));
+}
+
+/* ---------- tooltip ---------- */
+const tip = $('tooltip');
+function showTip(ev, html){ tip.innerHTML = html; tip.style.opacity = 1;
+  tip.style.left = Math.min(ev.clientX+14, innerWidth-260)+'px'; tip.style.top = (ev.clientY+12)+'px'; }
+function hideTip(){ tip.style.opacity = 0; }
+function hook(svg){
+  svg.querySelectorAll('[data-tip]').forEach(el=>{
+    el.addEventListener('mousemove', ev=>showTip(ev, el.dataset.tip));
+    el.addEventListener('mouseleave', hideTip);
+  });
+}
+
+/* ---------- chart builders (SVG) ---------- */
+function hbar(elId, pairs, color, tblId, cols){
+  const el = $(elId); const W = el.clientWidth||520;
+  if(!pairs.length){ el.innerHTML = '<div class="empty">No data in this period.</div>'; if(tblId)$(tblId).innerHTML=''; return; }
+  const max = Math.max(...pairs.map(p=>p[1]));
+  const rowH = 26, H = pairs.length*rowH + 8, lab = Math.min(230, W*0.42);
+  let s = `<svg width="100%" viewBox="0 0 ${W} ${H}">`;
+  pairs.forEach((p,i)=>{
+    const y = i*rowH+4, bw = Math.max(4,(W-lab-58)*(p[1]/max));
+    s += `<text x="${lab-8}" y="${y+13}" text-anchor="end" class="axis">${esc(trunc(p[0],34))}</text>`;
+    s += `<rect x="${lab}" y="${y}" width="${bw}" height="16" rx="4" fill="${color}" data-tip="<b>${esc(p[0])}</b><br>${p[1]} record${p[1]===1?'':'s'}"></rect>`;
+    s += `<text x="${lab+bw+6}" y="${y+13}" class="dlabel">${p[1]}</text>`;
+  });
+  s += `</svg>`;
+  el.innerHTML = s; hook(el);
+  if(tblId) $(tblId).innerHTML = mkTable(cols||['Item','Count'], pairs);
+}
+const trunc = (s,n)=> s.length>n ? s.slice(0,n-1)+'…' : s;
+function mkTable(cols, rows){
+  return `<table><tr>${cols.map((c,i)=>`<th class="${i>0?'num':''}">${esc(c)}</th>`).join('')}</tr>` +
+    rows.map(r=>`<tr>${r.map((c,i)=>`<td class="${i>0?'num':''}">${esc(c)}</td>`).join('')}</tr>`).join('') + '</table>';
+}
+
+function lineChart(elId, days, sInc, sRec, tblId){
+  const el = $(elId); const W = el.clientWidth||520, H = 190, padL=34, padB=22, padT=12, padR=14;
+  if(!days.length){ el.innerHTML='<div class="empty">No data in this period.</div>'; return; }
+  const max = Math.max(1, ...sInc, ...sRec);
+  const x = i => padL + (W-padL-padR) * (days.length===1?0.5:i/(days.length-1));
+  const y = v => padT + (H-padT-padB) * (1 - v/max);
+  let s = `<svg width="100%" viewBox="0 0 ${W} ${H}">`;
+  const ticks = [0, Math.ceil(max/2), max];
+  ticks.forEach(t=>{ s += `<line x1="${padL}" x2="${W-padR}" y1="${y(t)}" y2="${y(t)}" stroke="var(--grid)" stroke-width="1"/>
+    <text x="${padL-6}" y="${y(t)+4}" text-anchor="end" class="axis">${t}</text>`; });
+  const nlab = Math.min(days.length, 7);
+  for(let i=0;i<days.length;i+= Math.max(1, Math.round(days.length/nlab))){
+    s += `<text x="${x(i)}" y="${H-4}" text-anchor="middle" class="axis">${days[i].slice(5)}</text>`;
+  }
+  const path = arr => arr.map((v,i)=>(i?'L':'M')+x(i).toFixed(1)+' '+y(v).toFixed(1)).join(' ');
+  s += `<path d="${path(sInc)}" fill="none" stroke="var(--inc)" stroke-width="2"/>`;
+  s += `<path d="${path(sRec)}" fill="none" stroke="var(--pos)" stroke-width="2"/>`;
+  // direct end labels — identity never carried by colour alone
+  const li = sInc[sInc.length-1], lr = sRec[sRec.length-1];
+  let yi = y(li), yr = y(lr);
+  if (Math.abs(yi-yr) < 12) { if (yi <= yr) { yi -= 6; yr += 8; } else { yr -= 6; yi += 8; } }
+  s += `<rect x="${W-padR-64}" y="${yi-13}" width="8" height="8" rx="2" fill="var(--inc)"/><text x="${W-padR-2}" y="${yi-5}" text-anchor="end" class="dlabel">Incidents</text>`;
+  s += `<rect x="${W-padR-86}" y="${yr+5}" width="8" height="8" rx="2" fill="var(--pos)"/><text x="${W-padR-2}" y="${yr+13}" text-anchor="end" class="dlabel">Recognitions</text>`;
+  days.forEach((d,i)=>{
+    s += `<rect x="${x(i)-8}" y="0" width="16" height="${H}" fill="transparent" data-tip="<b>${d}</b><br>Incidents: ${sInc[i]}<br>Recognitions: ${sRec[i]}"></rect>`;
+    if(sInc[i]===Math.max(...sInc) && sInc[i]>0) {}
+  });
+  s += `</svg>`;
+  el.innerHTML = s; hook(el);
+  $(tblId).innerHTML = mkTable(['Date','Incidents','Recognitions'], days.map((d,i)=>[d,sInc[i],sRec[i]]));
+}
+
+function groupedCampus(elId, tblId, inc, rec){
+  const el = $(elId); const W = el.clientWidth||520, rowH=44, lab=110;
+  const rows = CAMPUSES.map(c=>[c,
+    inc.filter(r=>r.Campus===c).length,
+    rec.filter(r=>r.Campus===c).length]);
+  const max = Math.max(1,...rows.flatMap(r=>[r[1],r[2]]));
+  const H = rows.length*rowH+6;
+  let s = `<svg width="100%" viewBox="0 0 ${W} ${H}">`;
+  rows.forEach((r,i)=>{
+    const y = i*rowH+4;
+    s += `<text x="${lab-8}" y="${y+20}" text-anchor="end" class="axis">${r[0]}</text>`;
+    const w1 = Math.max(3,(W-lab-56)*(r[1]/max)), w2 = Math.max(3,(W-lab-56)*(r[2]/max));
+    s += `<rect x="${lab}" y="${y}" width="${w1}" height="14" rx="4" fill="var(--inc)" data-tip="<b>${r[0]}</b><br>Incidents: ${r[1]}"></rect>
+          <text x="${lab+w1+5}" y="${y+11}" class="dlabel">${r[1]}</text>`;
+    s += `<rect x="${lab}" y="${y+16}" width="${w2}" height="14" rx="4" fill="var(--pos)" data-tip="<b>${r[0]}</b><br>Recognitions: ${r[2]}"></rect>
+          <text x="${lab+w2+5}" y="${y+27}" class="dlabel">${r[2]}</text>`;
+  });
+  s += `</svg>`;
+  el.innerHTML = s; hook(el);
+  $(tblId).innerHTML = mkTable(['Campus','Incidents','Recognitions'], rows);
+}
+
+function tierStack(elId, tblId, inc){
+  const el = $(elId); const W = el.clientWidth||520, rowH=30, lab=110;
+  const rows = CAMPUSES.map(c=>{
+    const ci = inc.filter(r=>r.Campus===c);
+    return [c, ci.filter(r=>+r.Tier===1).length, ci.filter(r=>+r.Tier===2).length, ci.filter(r=>+r.Tier===3).length];
+  });
+  const max = Math.max(1,...rows.map(r=>r[1]+r[2]+r[3]));
+  const H = rows.length*rowH+6;
+  const colors = ['var(--tier1)','var(--tier2)','var(--tier3)'];
+  const names = ['Tier 1','Tier 2','Tier 3'];
+  let s = `<svg width="100%" viewBox="0 0 ${W} ${H}">`;
+  rows.forEach((r,i)=>{
+    const y = i*rowH+5; let xx = lab;
+    s += `<text x="${lab-8}" y="${y+13}" text-anchor="end" class="axis">${r[0]}</text>`;
+    const tot = r[1]+r[2]+r[3];
+    [1,2,3].forEach((t,k)=>{
+      const v = r[t]; if(!v) return;
+      const w = (W-lab-50)*(v/max);
+      s += `<rect x="${xx}" y="${y}" width="${Math.max(2,w-2)}" height="16" rx="4" fill="${colors[k]}" data-tip="<b>${r[0]}</b> · ${names[k]}<br>${v} incident${v===1?'':'s'}"></rect>`;
+      xx += w;
+    });
+    s += `<text x="${xx+5}" y="${y+13}" class="dlabel">${tot}</text>`;
+  });
+  s += `</svg>`;
+  el.innerHTML = s; hook(el);
+  $(tblId).innerHTML = mkTable(['Campus','Tier 1','Tier 2','Tier 3'], rows);
+}
+
+/* ---------- render ---------- */
+function render(){
+  if(!DATA) return;
+  const inc = filt(DATA.incidents), rec = filt(DATA.recognitions);
+  const pts = rec.reduce((s,r)=>s+(+r.Points||0),0);
+  const t3 = inc.filter(r=>+r.Tier===3);
+  const ratio = inc.length ? (rec.length/inc.length).toFixed(1)+' : 1' : (rec.length?'∞':'—');
+  const flagged = Object.values(byKey(inc, r=>r.Student+'|'+r.Campus)).filter(a=>a.length>=3).length;
+  $('kpis').innerHTML = [
+    kpi(inc.length,'Behaviour incidents','var(--ink)'),
+    kpi(t3.length,'Tier 3 referrals','var(--st-crit)','⛔'),
+    kpi(rec.length,'Recognitions','var(--pos)','⭐'),
+    kpi(pts,'Merit points','var(--pos)'),
+    kpi(ratio,'Positive : negative','var(--ink)','', 'target 4 : 1'),
+    kpi(flagged,'Students on watchlist', flagged? 'var(--st-crit)':'var(--st-good)','')
+  ].join('');
+
+  /* trend */
+  const dates = [...new Set(inc.concat(rec).map(r=>String(r.Date)))].sort();
+  lineChart('c-trend', dates,
+    dates.map(d=>inc.filter(r=>String(r.Date)===d).length),
+    dates.map(d=>rec.filter(r=>String(r.Date)===d).length), 't-trend');
+
+  groupedCampus('c-campus','t-campus',inc,rec);
+  tierStack('c-tier','t-tier',inc);
+
+  hbar('c-beh', counts(inc, r=>r.Behaviour).slice(0,10), 'var(--mag)', 't-beh', ['Behaviour','Count']);
+
+  const ivc = {};
+  inc.forEach(r=>String(r['Interventions Applied']||'').split(';').forEach(v=>{v=v.trim(); if(v) ivc[v]=(ivc[v]||0)+1;}));
+  hbar('c-iv', Object.entries(ivc).sort((a,b)=>b[1]-a[1]).slice(0,10), 'var(--mag2)', 't-iv', ['Intervention','Times used']);
+
+  hbar('c-val', counts(rec, r=>r.Value), 'var(--pos)', 't-val', ['Value','Recognitions']);
+
+  /* watchlist */
+  const watch = Object.entries(byKey(inc, r=>[r.Student,r.Campus,r.Class].join('|')))
+    .map(([k,a])=>{const p=k.split('|'); return {s:p[0],c:p[1],cls:p[2],n:a.length,
+      t3:a.filter(r=>+r.Tier===3).length, top:counts(a,r=>r.Behaviour)[0][0]};})
+    .filter(w=>w.n>=3).sort((a,b)=>b.n-a.n).slice(0,20);
+  $('watch').innerHTML = watch.length
+    ? `<table><tr><th>Student</th><th>Campus · Class</th><th class="num">Incidents</th><th>Most frequent</th><th></th></tr>`+
+      watch.map(w=>`<tr><td><b>${esc(w.s)}</b></td><td>${esc(w.c)} · ${esc(w.cls)}</td><td class="num">${w.n}</td><td>${esc(w.top)}</td><td>${w.t3?`<span class="pill t3">⛔ ${w.t3} major</span>`:''}</td></tr>`).join('')+'</table>'
+    : '<div class="empty">No students with 3+ incidents in this period — great sign.</div>';
+
+  /* leaderboard */
+  const lead = Object.entries(byKey(rec, r=>[r.Student,r.Campus,r.Class].join('|')))
+    .map(([k,a])=>{const p=k.split('|'); return {s:p[0],c:p[1],cls:p[2],
+      pts:a.reduce((t,r)=>t+(+r.Points||0),0), n:a.length,
+      val:counts(a,r=>r.Value)[0][0]};})
+    .sort((a,b)=>b.pts-a.pts).slice(0,15);
+  $('leader').innerHTML = lead.length
+    ? `<table><tr><th></th><th>Student</th><th>Campus · Class</th><th class="num">Points</th><th>Top value</th></tr>`+
+      lead.map((l,i)=>`<tr><td>${i<3?['🥇','🥈','🥉'][i]:i+1}</td><td><b>${esc(l.s)}</b></td><td>${esc(l.c)} · ${esc(l.cls)}</td><td class="num">${l.pts}</td><td>${esc(l.val)}</td></tr>`).join('')+'</table>'
+    : '<div class="empty">No recognitions yet in this period.</div>';
+
+  /* shout-outs */
+  const sh = CAMPUSES.map(c=>{
+    const cw = rec.filter(r=>r.Campus===c);
+    const tops = Object.entries(byKey(cw, r=>[r.Student,r.Class].join('|')))
+      .map(([k,a])=>{const p=k.split('|'); const best=a.slice().sort((x,y)=>(+y.Points||0)-(+x.Points||0))[0];
+        return {s:p[0],cls:p[1],pts:a.reduce((t,r)=>t+(+r.Points||0),0),val:counts(a,r=>r.Value)[0][0],note:best.Notes||''};})
+      .sort((a,b)=>b.pts-a.pts).slice(0,3);
+    return {c,tops};
+  }).filter(x=>x.tops.length);
+  $('shouts').innerHTML = sh.length ? sh.map(g=>
+    `<div style="margin-bottom:10px"><b style="color:var(--ink-2)">${g.c}</b>` +
+    g.tops.map(t=>`<div class="shout"><b>${esc(t.s)}</b> <span class="meta">(${esc(t.cls)})</span> — ${t.pts} pts · ${esc(t.val)}${t.note?`<div class="meta">“${esc(t.note)}”</div>`:''}</div>`).join('')+'</div>'
+  ).join('') : '<div class="empty">No recognitions yet in this period.</div>';
+
+  /* certificates: top merit student per class */
+  const perClass = Object.entries(byKey(rec, r=>[r.Campus,r.Class].join('|'))).map(([k,a])=>{
+    const p = k.split('|');
+    const best = Object.entries(byKey(a, r=>r.Student))
+      .map(([s,rows])=>({s, pts:rows.reduce((t,r)=>t+(+r.Points||0),0), val:counts(rows,r=>r.Value)[0][0]}))
+      .sort((x,y)=>y.pts-x.pts)[0];
+    return {campus:p[0], cls:p[1], ...best};
+  }).sort((a,b)=> a.campus.localeCompare(b.campus) || a.cls.localeCompare(b.cls));
+  $('certs').innerHTML = perClass.length ? perClass.map(c=>
+    `<div class="cert"><div class="mark">${LOGOMARK}</div>
+     <div class="brand">Silverleaf<small>ACADEMY</small></div>
+     <div class="ttl">Certificate of Recognition</div>
+     <div class="name">${esc(c.s)}</div><div class="cls">${esc(c.cls)} · ${esc(c.campus)} Campus</div>
+     <div class="why">For consistently showing <b>${esc(c.val)}</b> — top merit student of the class this period.</div>
+     <div class="pts">⭐ ${c.pts} merit points</div>
+     <div class="tag">The Future Starts Here</div>
+     <div class="sig"><span>Class Teacher</span><span>Principal</span></div></div>`
+  ).join('') : '<div class="empty">Certificates appear once recognitions are logged.</div>';
+}
+function kpi(v, label, color, icon, sub){
+  return `<div class="kpi">${icon?`<span class="icon">${icon}</span>`:''}<b style="color:${color}">${v}</b><small>${label}${sub?` · ${sub}`:''}</small></div>`;
+}
+const byKey = (rows, fn)=>{ const o={}; rows.forEach(r=>{ const k=fn(r)||'—'; (o[k]=o[k]||[]).push(r); }); return o; };
+const counts = (rows, fn)=> Object.entries(byKey(rows,fn)).map(([k,a])=>[k,a.length]).sort((a,b)=>b[1]-a[1]);
+
+/* ---------- demo data ---------- */
+function makeDemo(){
+  const behs = ['Disruption','Defiance / Non-compliance','Low / No Work Completion','Disrespect','Out of Seat','Inappropriate Language','Physical Contact / Verbal Aggression / Bullying','Technology Violation','Impulsive'];
+  const ivs = ['Proximity','Warning','Student redirected','Reflection sheet','Phone call home','Restorative dialogue','Impromptu circle','Detention / loss of recess'];
+  const vals = ['Respect','Responsibility','Kindness','Effort','Leadership','Honesty','Teamwork','Excellence'];
+  const kids = {'Usa River':['Ethan Ayo|3A','Mercy Akyoo|3A','Precious Kaaya|6B','Glory Itambu|7A','Jenifer Laizer|5B','Baraka Mahaja|3C','Fidel Kaaya|3A','Aisha Izadin|1B'],
+    'Arusha Modern':['Khalid Ally|Gr5_AM','Amarise Jackson|Gr3_AM','Lisa Chami|Gr7_AM','Mike Lundu|Gr2_AM','Stacey Kiamba|Gr6_AM'],
+    'Boma':['Purity Dugange|Gr2_Boma','Kenice Bitulo|Gr1_Boma','Yael Kiula|Gr2_Boma'],
+    'Ilboru':['Shanelle Kabora|Kg2_Ilboru','Ryan Baguma|Kg1_Ilboru'],
+    'Kijenge':['Ben Laizer|Kg2_Kijenge','Lucas Juma|Kg1_Kijenge']};
+  const teachers = ['Neema Minja','Monica Kessy','Jephason Akyoo','Grace Kambona','Msafiri Mayaya'];
+  const R = seed(42), incidents=[], recognitions=[];
+  for(let d=27; d>=0; d--){
+    const day = new Date(); day.setDate(day.getDate()-d);
+    if(day.getDay()===0||day.getDay()===6) continue;
+    const ds = iso(day);
+    CAMPUSES.forEach(c=>{
+      const n = Math.floor(R()* (c==='Usa River'?5:2.2));
+      for(let i=0;i<n;i++){
+        const kid = kids[c][Math.floor(R()*kids[c].length)].split('|');
+        const tier = R()<.68?1:(R()<.82?2:3);
+        incidents.push({ID:'d'+d+i+c, Date:ds, Campus:c, Class:kid[1], Student:kid[0],
+          Behaviour:behs[Math.floor(R()*behs.length)], Tier:tier,
+          'Managed By':tier===3?'Administrator (Major referral)':'Teacher',
+          'Interventions Applied': ivs[Math.floor(R()*ivs.length)]+'; '+ivs[Math.floor(R()*ivs.length)],
+          'Parent Contact': tier>1?'Yes — phone':'No', Notes:'', Teacher:teachers[Math.floor(R()*teachers.length)]});
+      }
+      const m = Math.floor(R()* (c==='Usa River'?7:3));
+      for(let i=0;i<m;i++){
+        const kid = kids[c][Math.floor(R()*kids[c].length)].split('|');
+        recognitions.push({ID:'r'+d+i+c, Date:ds, Campus:c, Class:kid[1], Student:kid[0],
+          Value:vals[Math.floor(R()*vals.length)], Points:1+Math.floor(R()*3),
+          Notes: R()<.3?'Helped a classmate without being asked':'', Teacher:teachers[Math.floor(R()*teachers.length)]});
+      }
+    });
+  }
+  return {ok:true, updated:'sample', incidents, recognitions};
+}
+function seed(s){ return ()=>{ s=(s*9301+49297)%233280; return s/233280; }; }
+
+/* ---------- init ---------- */
+const DEFAULT_API = 'https://script.google.com/macros/s/AKfycbzwTu01u9msknoqKAQ-GTi1Hj7_wf3cE6rfwvI4Bt1zqpa5jgGY3WZ16s50FPSpV3kn/exec';
+const qs = new URLSearchParams(location.search);
+const savedApi = qs.get('api') || unstore('sla_dash_api') || DEFAULT_API;
+if(savedApi){ $('api').value = savedApi; connect(); }
+</script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 /* Silverleaf Behaviour Tracker — service worker
  * Cache-first app shell so the app opens fully offline once installed.
  * Bump VERSION whenever index.html changes so phones pick up the update. */
-const VERSION = 'sbt-v1';
+const VERSION = 'sbt-v2';
 const SHELL = [
   './',
   './index.html',
