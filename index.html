@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#002368">
+<title>Silverleaf Behaviour Tracker</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Behaviour">
+<style>
+:root{
+  /* Silverleaf Academy brand palette (Brand Guidelines 2023) */
+  --green:#002368; --green-dark:#001a4d; --green-light:#D9ECF9;   /* Electric Blue + 30% Light Blue */
+  --gold:#FFC952; --gold-dark:#8a5f00; --gold-light:#FFF7E5;      /* Gold highlight + 15% */
+  --lblue:#80BFEC;
+  --amber:#b97708; --amber-light:#fdf3e0;
+  --red:#b3372f; --red-light:#fbecea;
+  --blue:#002368; --blue-light:#D9ECF9;
+  --ink:#1c1b19; --ink-2:#52514e; --ink-3:#818283;                /* Silver */
+  --paper:#f5f7fa; --card:#ffffff; --line:#dfe4ec;
+  --radius:14px;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;background:var(--paper);color:var(--ink);
+  font:16px/1.45 Montserrat,Helvetica,system-ui,-apple-system,sans-serif;}
+body{padding-bottom:calc(84px + env(safe-area-inset-bottom));}
+header.app{position:sticky;top:0;z-index:20;background:var(--green);color:#fff;
+  padding:calc(10px + env(safe-area-inset-top)) 16px 10px;display:flex;align-items:center;gap:10px;}
+header.app .logo{width:30px;height:38px;color:#fff;flex:none;display:flex;align-items:center;}
+header.app .logo svg{width:100%;height:100%;}
+header.app h1{font-size:16px;margin:0;font-weight:700;letter-spacing:.2px;}
+header.app .sub{font-size:12px;opacity:.85;}
+#netdot{margin-left:auto;font-size:11px;padding:4px 9px;border-radius:99px;background:rgba(255,255,255,.16);white-space:nowrap;}
+main{padding:14px 14px 8px;max-width:560px;margin:0 auto;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:14px;margin-bottom:12px;box-shadow:0 1px 2px rgba(0,0,0,.03);}
+h2{font-size:14px;margin:0 0 10px;color:var(--ink-2);text-transform:uppercase;letter-spacing:.6px;font-weight:700;}
+.bigbtns{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.bigbtn{border:none;border-radius:var(--radius);padding:20px 12px;font-size:16px;font-weight:700;
+  color:#fff;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;}
+.bigbtn .ic{font-size:30px;line-height:1;}
+.bigbtn small{font-weight:500;font-size:12px;opacity:.9;}
+.bb-neg{background:var(--green);}
+.bb-pos{background:var(--gold);color:var(--green);} .bb-pos small{opacity:.75;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;cursor:pointer;
+  border-radius:11px;padding:13px 18px;font-size:15px;font-weight:700;color:#fff;background:var(--green);}
+.btn.sec{background:#fff;color:var(--green);border:1.5px solid var(--green);}
+.btn.ghost{background:#fff;color:var(--ink-2);border:1.5px solid var(--line);font-weight:600;}
+.btn.warn{background:var(--green);}
+.btn.block{width:100%;}
+.btn:disabled{opacity:.45;}
+label.fl{display:block;font-size:13px;font-weight:600;color:var(--ink-2);margin:12px 0 5px;}
+input[type=text],input[type=url],select,textarea{width:100%;padding:12px;border:1.5px solid var(--line);
+  border-radius:10px;font-size:16px;background:#fff;color:var(--ink);font-family:inherit;}
+textarea{min-height:74px;resize:vertical;}
+.chips{display:flex;flex-wrap:wrap;gap:8px;}
+.chip{border:1.5px solid var(--line);background:#fff;color:var(--ink);border-radius:99px;
+  padding:9px 14px;font-size:14px;cursor:pointer;font-weight:600;}
+.chip.on{background:var(--green);border-color:var(--green);color:#fff;}
+.chip.on.neg{background:var(--green);border-color:var(--green);}
+.tierrow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px;}
+.tier{border:1.5px solid var(--line);border-radius:11px;background:#fff;padding:10px 8px;text-align:center;cursor:pointer;}
+.tier b{display:block;font-size:15px;}
+.tier small{font-size:11px;color:var(--ink-3);}
+.tier.on1{background:var(--amber-light);border-color:var(--amber);color:var(--amber);}
+.tier.on2{background:#fdeadd;border-color:#c05621;color:#c05621;}
+.tier.on3{background:var(--red-light);border-color:var(--red);color:var(--red);}
+.tier.dis{opacity:.35;pointer-events:none;}
+.note{font-size:13px;color:var(--ink-2);background:var(--green-light);border-radius:10px;padding:10px 12px;margin-top:10px;}
+.note.alert{background:var(--red-light);color:var(--red);}
+.note.amber{background:var(--amber-light);color:var(--amber);}
+.ivlist{display:flex;flex-direction:column;gap:6px;max-height:270px;overflow:auto;margin-top:6px;}
+.iv{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1.5px solid var(--line);
+  border-radius:10px;background:#fff;cursor:pointer;font-size:14px;}
+.iv.on{border-color:var(--green);background:var(--green-light);}
+.iv .box{width:20px;height:20px;border-radius:6px;border:2px solid var(--ink-3);flex:none;margin-top:1px;
+  display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:800;}
+.iv.on .box{background:var(--green);border-color:var(--green);}
+.stu-search{position:relative;}
+.stu-list{max-height:300px;overflow:auto;margin-top:8px;display:flex;flex-direction:column;gap:5px;}
+.stu{padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff;cursor:pointer;
+  font-size:15px;display:flex;justify-content:space-between;align-items:center;}
+.stu small{color:var(--ink-3);}
+.stu.on{border-color:var(--green);background:var(--green-light);font-weight:700;}
+.pts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.pt{border:1.5px solid var(--line);border-radius:11px;background:#fff;padding:12px 6px;text-align:center;cursor:pointer;}
+.pt b{display:block;font-size:20px;color:var(--gold-dark);}
+.pt small{font-size:11px;color:var(--ink-3);}
+.pt.on{background:var(--gold);border-color:var(--gold-dark);}
+.pt.on b,.pt.on small{color:var(--green);}
+.qitem{border:1px solid var(--line);border-radius:11px;padding:10px 12px;margin-bottom:8px;background:#fff;
+  display:flex;gap:10px;align-items:flex-start;font-size:14px;}
+.qitem .tag{flex:none;font-size:11px;font-weight:800;border-radius:7px;padding:3px 8px;margin-top:2px;}
+.tag.neg{background:var(--red-light);color:var(--red);}
+.tag.pos{background:var(--gold-light);color:var(--gold-dark);}
+.qitem .meta{color:var(--ink-3);font-size:12px;}
+.qdel{margin-left:auto;flex:none;border:none;background:none;color:var(--ink-3);font-size:18px;cursor:pointer;padding:2px 6px;}
+nav.tabs{position:fixed;bottom:0;left:0;right:0;z-index:30;background:#fff;border-top:1px solid var(--line);
+  display:grid;grid-template-columns:repeat(4,1fr);padding:6px 4px calc(6px + env(safe-area-inset-bottom));}
+nav.tabs button{border:none;background:none;font-family:inherit;font-size:11px;color:var(--ink-3);
+  display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;cursor:pointer;font-weight:600;position:relative;}
+nav.tabs button .ic{font-size:21px;line-height:1;}
+nav.tabs button.on{color:var(--green);}
+nav.tabs .badge{position:absolute;top:0;right:calc(50% - 24px);background:var(--red);color:#fff;
+  font-size:10px;font-weight:800;border-radius:99px;min-width:17px;height:17px;display:flex;align-items:center;justify-content:center;padding:0 4px;}
+.screen{display:none;}
+.screen.on{display:block;}
+.step{display:none;}
+.step.on{display:block;}
+.crumb{font-size:12px;color:var(--ink-3);margin-bottom:8px;}
+.crumb b{color:var(--ink);}
+.rowbtns{display:flex;gap:10px;margin-top:14px;}
+.rowbtns .btn{flex:1;}
+#toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%) translateY(20px);
+  background:var(--ink);color:#fff;padding:11px 18px;border-radius:11px;font-size:14px;opacity:0;
+  transition:.25s;pointer-events:none;z-index:99;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.statgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center;}
+.stat b{display:block;font-size:22px;}
+.stat small{font-size:11px;color:var(--ink-3);}
+.stat.pos b{color:var(--gold-dark);} .stat.neg b{color:var(--red);} .stat.pend b{color:var(--amber);}
+.defbox{font-size:13px;color:var(--ink-2);margin-top:6px;}
+.hr{border:none;border-top:1px solid var(--line);margin:14px 0;}
+.small{font-size:12.5px;color:var(--ink-3);}
+.linkish{color:var(--blue);text-decoration:underline;cursor:pointer;}
+.admin-steps{margin:8px 0 0;padding-left:18px;font-size:13.5px;color:var(--ink-2);}
+.admin-steps li{margin-bottom:6px;}
+.selsum{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.selsum span{background:var(--blue-light);color:var(--blue);border-radius:8px;font-size:12.5px;font-weight:700;padding:4px 9px;}
+#installbar{display:none;background:var(--gold-light);border-bottom:1px solid #eedeb0;padding:10px 14px;
+  font-size:13.5px;color:var(--ink-2);align-items:center;gap:10px;}
+#installbar.show{display:flex;}
+#installbar .btn{padding:8px 14px;font-size:13px;flex:none;}
+#installbar .close{margin-left:auto;border:none;background:none;font-size:17px;color:var(--ink-3);cursor:pointer;flex:none;}
+</style>
+</head>
+<body>
+<header class="app">
+  <div class="logo"><svg viewBox="268 243 297 383" xmlns="http://www.w3.org/2000/svg" fill="currentColor" aria-label="Silverleaf Academy"><path d="m408.57,247.42v160.1l-128.39-128.39c16.26-9.47,59.43-30.16,128.39-31.7Z"/><polygon points="408.57 430.64 408.57 533.57 272.84 397.84 272.84 294.89 408.57 430.64"/><path d="m272.84,420.93l135.72,135.72v65.15c-31.4-4.23-83.02-31.23-108.59-77.96-18.49-33.79-27.13-72.06-27.13-110.57v-12.34Z"/><path d="m560.62,420.93l-135.72,135.72v65.15c31.4-4.23,83.02-31.23,108.59-77.96,18.49-33.79,27.13-72.06,27.13-110.57v-12.34Z"/><path d="m553.33,279.14l-128.43,128.45v-160.17c69.01,1.54,112.21,22.25,128.43,31.72Z"/><polygon points="560.62 294.97 560.62 397.9 424.9 533.62 424.9 430.69 560.62 294.97"/></svg></div>
+  <div><h1>Behaviour Tracker</h1><div class="sub" id="hdrsub">Silverleaf Academy</div></div>
+  <div id="netdot">…</div>
+</header>
+<div id="installbar">
+  <span id="installmsg"></span>
+  <button class="btn" id="installbtn" style="display:none">Install</button>
+  <button class="close" onclick="hideInstall(true)">&#10005;</button>
+</div>
+
+<main>
+<!-- ============ HOME ============ -->
+<section class="screen" id="scr-home">
+  <div class="statgrid">
+    <div class="stat pos"><b id="st-pos">0</b><small>Recognitions today</small></div>
+    <div class="stat neg"><b id="st-neg">0</b><small>Incidents today</small></div>
+    <div class="stat pend"><b id="st-pend">0</b><small>Waiting to sync</small></div>
+  </div>
+  <div class="bigbtns">
+    <button class="bigbtn bb-pos" onclick="startRecognition()"><span class="ic">&#11088;</span>Recognise<br>Positive Behaviour<small>Merit points</small></button>
+    <button class="bigbtn bb-neg" onclick="startIncident()"><span class="ic">&#9888;&#65039;</span>Log<br>Behaviour Incident<small>Tier 1 · 2 · 3</small></button>
+  </div>
+  <div class="card" style="margin-top:12px">
+    <h2>Sync</h2>
+    <div class="small" id="syncmsg">No records waiting.</div>
+    <div class="rowbtns">
+      <button class="btn" id="syncbtn" onclick="syncNow()">&#128260; Sync now</button>
+      <button class="btn ghost" onclick="exportCSV()">Export CSV</button>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Today's entries</h2>
+    <div id="todaylist" class="small">Nothing recorded yet today.</div>
+  </div>
+</section>
+
+<!-- ============ INCIDENT FLOW ============ -->
+<section class="screen" id="scr-inc">
+  <div class="card">
+    <div class="crumb" id="inc-crumb"></div>
+    <div class="selsum" id="inc-sum"></div>
+
+    <div class="step" id="inc-1">
+      <h2>1 · Class</h2>
+      <div class="chips" id="inc-classes"></div>
+    </div>
+
+    <div class="step" id="inc-2">
+      <h2>2 · Student</h2>
+      <div class="stu-search"><input type="text" id="inc-stu-q" placeholder="Type a name…" oninput="renderIncStudents()"></div>
+      <div class="stu-list" id="inc-students"></div>
+    </div>
+
+    <div class="step" id="inc-3">
+      <h2>3 · Behaviour</h2>
+      <div class="chips" id="inc-behaviours"></div>
+      <div class="defbox" id="inc-def"></div>
+    </div>
+
+    <div class="step" id="inc-4">
+      <h2>4 · Tier (intensity)</h2>
+      <div class="tierrow" id="inc-tiers">
+        <div class="tier" data-t="1" onclick="pickTier(1)"><b>Tier 1</b><small>Low — teacher managed</small></div>
+        <div class="tier" data-t="2" onclick="pickTier(2)"><b>Tier 2</b><small>Medium — teacher + parent</small></div>
+        <div class="tier" data-t="3" onclick="pickTier(3)"><b>Tier 3</b><small>High — admin referral</small></div>
+      </div>
+      <div id="tiernote"></div>
+    </div>
+
+    <div class="step" id="inc-5">
+      <h2>5 · Intervention / consequence applied</h2>
+      <div class="small">Choose from the Silverleaf Behaviour Matrix for this behaviour and tier (at least one).</div>
+      <div class="ivlist" id="inc-ivs"></div>
+      <div id="adminbox"></div>
+      <label class="fl">Notes (optional)</label>
+      <textarea id="inc-notes" placeholder="Brief context — what happened, when, follow-up needed…"></textarea>
+      <label class="fl">Parent contacted?</label>
+      <div class="chips" id="inc-parent">
+        <button class="chip" data-v="No">No</button>
+        <button class="chip" data-v="Yes — phone">Yes — phone</button>
+        <button class="chip" data-v="Yes — in person">Yes — in person</button>
+        <button class="chip" data-v="Message sent">Message sent</button>
+      </div>
+    </div>
+
+    <div class="rowbtns">
+      <button class="btn ghost" onclick="incBack()">&#8592; Back</button>
+      <button class="btn warn" id="inc-next" onclick="incNext()" disabled>Next</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ RECOGNITION FLOW ============ -->
+<section class="screen" id="scr-rec">
+  <div class="card">
+    <div class="crumb" id="rec-crumb"></div>
+    <div class="selsum" id="rec-sum"></div>
+
+    <div class="step" id="rec-1">
+      <h2>1 · Class</h2>
+      <div class="chips" id="rec-classes"></div>
+    </div>
+
+    <div class="step" id="rec-2">
+      <h2>2 · Student</h2>
+      <div class="stu-search"><input type="text" id="rec-stu-q" placeholder="Type a name…" oninput="renderRecStudents()"></div>
+      <div class="stu-list" id="rec-students"></div>
+    </div>
+
+    <div class="step" id="rec-3">
+      <h2>3 · Silverleaf value shown</h2>
+      <div class="chips" id="rec-values"></div>
+      <label class="fl">Merit points</label>
+      <div class="pts" id="rec-pts">
+        <div class="pt" data-p="1" onclick="pickPts(1)"><b>+1</b><small>Merit — good choice</small></div>
+        <div class="pt" data-p="2" onclick="pickPts(2)"><b>+2</b><small>Star — above &amp; beyond</small></div>
+        <div class="pt" data-p="3" onclick="pickPts(3)"><b>+3</b><small>Gold — exceptional</small></div>
+      </div>
+      <label class="fl">What did they do? (optional, read out at assembly)</label>
+      <textarea id="rec-notes" placeholder="e.g. Helped a younger student who fell at break time…"></textarea>
+    </div>
+
+    <div class="rowbtns">
+      <button class="btn ghost" onclick="recBack()">&#8592; Back</button>
+      <button class="btn" id="rec-next" onclick="recNext()" disabled>Next</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PENDING / HISTORY ============ -->
+<section class="screen" id="scr-queue">
+  <div class="card">
+    <h2>Waiting to sync (<span id="qcount">0</span>)</h2>
+    <div id="queuelist"></div>
+    <button class="btn block" onclick="syncNow()">&#128260; Sync now</button>
+  </div>
+  <div class="card">
+    <h2>Recently synced</h2>
+    <div id="syncedlist" class="small">Nothing synced yet.</div>
+  </div>
+</section>
+
+<!-- ============ SETTINGS ============ -->
+<section class="screen" id="scr-set">
+  <div class="card">
+    <h2>Teacher &amp; campus</h2>
+    <label class="fl">Your name</label>
+    <input type="text" id="set-name" placeholder="e.g. Neema Minja">
+    <label class="fl">Campus</label>
+    <select id="set-campus"></select>
+    <label class="fl">Sync link (from your Principal / admin)</label>
+    <input type="url" id="set-url" placeholder="https://script.google.com/macros/s/…/exec">
+    <div class="small" style="margin-top:6px">Paste this once. Records save on your phone even with no internet, and upload to the school system when you tap Sync.</div>
+    <button class="btn block" style="margin-top:14px" onclick="saveSettings(true)">Save settings</button>
+  </div>
+  <div class="card">
+    <h2>About</h2>
+    <div class="small">Silverleaf Academy Behaviour Tracker · works fully offline · data syncs to the Silverleaf Academy master behaviour sheet. Behaviours, tiers and interventions follow the Silverleaf Behaviour Flowchart &amp; Matrix.<br><br>Tip: in Chrome choose <b>Add to Home screen</b> to install this as an app.</div>
+  </div>
+</section>
+</main>
+
+<nav class="tabs">
+  <button id="tab-home" class="on" onclick="go('home')"><span class="ic">&#127968;</span>Home</button>
+  <button id="tab-rec" onclick="startRecognition()"><span class="ic">&#11088;</span>Recognise</button>
+  <button id="tab-queue" onclick="go('queue')"><span class="ic">&#128228;</span>Sync<span class="badge" id="qbadge" style="display:none">0</span></button>
+  <button id="tab-set" onclick="go('set')"><span class="ic">&#9881;&#65039;</span>Settings</button>
+</nav>
+<div id="toast"></div>
+
+<script>
+/* ================= DATA ================= */
+const ROSTER = {"Arusha Modern":{"Daycare_AM":["Ahsad Barabii Mang'unyuka","Azlan Alamu Kassa","Belicia Lufunyo Lupenza","Bellatrix Mussa Ayoub","Braiden Faustine Kiecha","Brilliant Jeremiah Laizer","Coniah Clement Chawe","Daaron Deogratius Lyimo","Ethan Basili Slaa","Giovanna Geophrey Claude","Isadora Joseph Kisyoky","Jensen Durkik Tomas","Michelle Asubuhi Yoyo","Omolara Olatunji Aluko","Sarah Maximilian Mjelwa","Shoham Ahaz Jotham","Tahir Fuad Abdallah","Tallya Alex Raymond","Travis Hoza","Yoki-aybars Faraja Shango"],"KG1_AM":["Ahsan Hussein Mikina","Alvin Passian Mathias","Arielle Calvin Hamphrey","Dahyan Abdallah Mollel","Daniel Rubio Segovia","Ellis Eliya Albert","Gabriel Victor Kessy","Gabriella Jeremia Kimgoni","Galia Geofrey Tarimo","Isabella Jeremia Kimgoni","Isabella Joseph Kisyoky","Ivana P. Richard","Jolene Elias Lembris","Lauriane Basili Slaa","Laveen Mohamed Massanga","Lennox J. Pole","Mansoor Ahmed Ally","Mukhtar Hassan Abdillah","Taimoor Athuman Mwinyi"],"KG2_AM":["Adrian Ebeneza Dominic","Adyan Mohammed Msuya","Alan Jackson Mrema","Ariana E. Kavishe","Ariana Josephat Tarimo","Arthur Simon Maeda","Benson G. Smith","Benson Vitus Mgaya","Brayan Eliaza John","Camila Josephat Kimaro","Clara Mussa Ayoub","Cleverson Praygod Mamuya","Elisha Reginald Lucas","Enock Reginald Lucas","Ethan Emmanuel Mollel","Ethan Erick Shirima","Hodhan M Noor","Jahida H Luzuba","Jerell J. Kavishe","Laithah Harith Vicent","Luqman Saad Musa","Nancy Thomas Samwel","Nasibu H. Hamza","Omary Kasim Salimu","Princess Edward Mahinya","Qari Salah Ahmed","Yvonne Peter Michael"],"Gr1_AM":["Aidan Fulgence Bizimgambe","Alice Elisa Laanyoni","Angel Jackson Mawole","Arianna Asimwe Adolf","Arthur Amon Jackson","Arya Elibariki Kivuyo","Aryan Ramadhani Mdulu","Barack Humphrey Elibariki","Beverlyne Rexford Makoye","Brianna Cleopa Sikawa","Catheline Clement Chawe","Clarisa Sylvester Akida","Crystal Carlson Robert","Daniel Joel Mlangwa","Demetri Dennis Naftal","Emaline Apolinary Oisso","Ethaline Elirehema Melejack","Ezekiel Abraham Herry","Fahim Yusufu Kirika","Fernando Rubio Segovia","Feysal Rashid Mungah","Frank Damiano Aloyce","Gianna Mussa Nahato","Giselle Mussa Nahato","Henry Pius Monjare","Ivan Ezekiel Kitomary","Ivan Heriel Sawe","Jennice Joseph Bohay","Kendrick Frank Stephen","Kian Bryson Lyatuu","Loisamaria Asubuhi Yoyo","Mbaraka Abdulkadir Abushiri","Melisa Shedrack Shirima","Michelle Hillary Nanyaro","Nanice Gilia Mlangwa","Nasinyari Dennis Kidiri","Olivia Hezron Wamta","Rodney Jovinus Josephat","Rodrick Ridas Laizer","Skylar Athuman Mwinyi","Suhail Mohamed Seif"],"Gr2_AM":["Aahil Mohamed Selemani","Abdulhakeem Alamu Kassa","Abdulrahman Ahmed Ally","Abgael Victor Mollel","Alvin Orgeness Massawe","Andrew Simon Maeda","Aviah Damian","Ayder B. Singano","Benedict August Ngowi","Blesia L. Lupenza","Cristabel J Mongi","Dorice D Lagweni","Eileen M Mshana","Fatma Ally Omary","Gavril G. Tarimo","Ilwad Saad Musa","Israel G Kiula","Ivy A. Asimuye","King Shaban Kiamba","Liam Emmanuel Peter","Liam G. Mwaijege","Mahir Abdillah Mohamed","Maliha Mohamed Seif","Mike Abel Lundu","Molly Elg","Najati R. Nana","Nurian Olais","Princess T. Maffa","Rahim J. Malya","Rolake Olatunji Aluko","Ryan Demetrius Kanyankole","Salim Ally Semwanja","Samwel Asubuhi Yoyo"],"Gr3_AM":["Abibu Ally Malisa","Adrian Anselem Buluda","Amarah Abdi Madungale","Amarise Joel Jackson","Bravo A Ngowi","Chloe Bosco Temu","Denisbrian Adam Mruma","Edina Kelvin Massaro","Ethan Elikira Tarimo","Ethan James Mrosso","Giovann Geophrey Claude","Hamza Waziri Hamza","Ian Wilson Swai","Lincoln George Busongo","Maysa Y. Abdillahi","Miguel Deogratus Kyara","Mshamu Juma Munde","Nia Noah Leken","Nuaym H. Wawino","Rahyan Ramadhan Mussa","Salome Atanus Nchaisabha","Shamsa Abdillahi Mohamed"],"Gr4_AM":["Amir Athumani Mchana","Breanna Rexford Makoye","Brian Jackson Mawole","Brightness Cleopa Sikawaa","Caleb Chrisant Gladson","Collins Maxmillian Mtika","Deodan Deograsias Lymo","Dorcas Edward Lengutai","Elian Emmanuel Kaaya","Faith-malikia Evans Naftali","Gian Geofrey Tarimo","Hope-malaika Evans Naftali","Ibrahim Yusuph Ramadhan","Jayleen Johnbosco Kisaka","Jensen Joseph Bohay","Kendrick Walter Tenga","Mansoor Mussa Hassan","Miranda Faustine Kiecha","Munde J. Munde","Nicole Anania Tebandeke","Saifuddin Khuzema Mohamedali","Samwel Godfrey Chilonga","Sasha Mussa Nahato","Success Robisnon Mollel","Yusra Saad Musa"],"Gr5_AM":["Aiyana Barabii Mang'unyuka","Aiyla Alamu Kassa","Daniela Daniel Chawagula","Eden Nelson Medukenya","Elizabeth Shedrack Shirima","Faheem Herry Mahambo","Gooodluck Peter Mrema","Hassan Mahamoud Noor","Imaan Mahamud Nuur","Khalid Ahmed Ally","Mounir Hafidh Abdallah","Raymond Emmanuel Mghogho","Ryan Francis Boke","Stephanie Stephen Colman","Tracey Shabani Kiamba","Valencia Joel Jackson"],"Gr6_AM":["Chloe Richard Kinemo","Daniel William Kamaru","Ethan Joel Jackson","Ivan Allen Mollel","Jonathan Josephat Prosper","Jovin Orgeness Massawe","Kendrick Shabani Kiamba","Manaal Ahmed Al-shatry","Nauman Wawino Hamisi","Nolan Olais Mollel","Owen Hezron Wamta","Simon Basil Augustino","Stacey Shabani Kiamba","Suleiman Ally Semwanja"],"Gr7_AM":["Ahmad Salim Magwe","Aimar Mahamud Riraash","Allan Allen Mollel","Hanan Mahamoud Warsame","Ian Samwel Medukenya","Isaka Fidelis Uisso","Jaydem Johnbosco Kisaka","Jayden Johnbosco Kisaka","Jeslin Justine Laizer","Julien James Juin","Kalton Felix Mtei","Khaleel Rahim Manji","Lisa Dismas Chami","Manaal Mussa Hassan","Sami Ayoub Kabalemesa"]},"Boma":{"Daycare_Boma":["Arabella Patrick Meagie","Blessing Justine Ryeyemamu","Cleopatra Alexander Mgosha","Patrick Emmanuel Mushi","Prosper Justin Maghali","Sharon Augustino Mtei","Yasser Haruun Mbuyu"],"KG1_Boma":["Alwiyah Hussein Shabani","Bora Paul Msalya","Ivan Omary Mghenyi","Naveed Athumani Gulamali","Precious Justine Emmanuel","Sarah Samuel Samson"],"KG2_Boma":["Baika Gerald Swai","Dency Albert Grayson","Gianna Ablilirasuli Mbua","Hadriell Henry Stephano","Haris Lengai Sabaya","Holiness Willliamson Saro","Ibrahimu Yusuph Shemahonge","Patricial Steven Mchaki","Petronila Onael Gwilla","Wiseman Eliamini Israel"],"Gr1_Boma":["Abigail Williamson Kileo","Agrey John Petro","Christa Alexander Mgosha","Elisha Baraka Munuo","Glory Justine Ryeyemamu","Holden Henry Ng'ogo","Ihsan Nasri Rugemalira","Jayden Christian Haule","Kenice Kenedy Bitulo","Lidness Alelx Urassa","Marcus James Nhandule","Mohamed Omary Kipingu","Nasri Karim Ukio","Nirvana Eliud Ndosi","Paul Emmanuel Mushi","Praygod Emmanuel Kazoka","Rebecca Benjamini Ezekieli","Royalty Anan Kimaro"],"Gr2_Boma":["Adrian Robert Mrosso","Aldrich Lameck Kihunrwa","Austine Baraka Urassa","Brightness Rutha Deons","Brighton Nelson Urassa","Elinah Erick Mlenge","Genesis Gift Kimaro","Ismail George Shimba","Purity Henry Dugange","Stanley Deogratius Chami","Wisdom Wilfred Mbise","Yael Daudi Kiula"]},"Ilboru":{"Daycare Ilboru":["Aria Edwin Frank","Carrick Daniel Leon","Casey Innocent Chalamila","Charlotte Edmund Burra","Cyrus Carlson Robert","Derek Prince Muthengi","Edriel Edmund Burra","Elliott Zacharia Sarja","Ethan Everest Kivuyo","Ethan Goodluck Mushi","Faisal Ramadhan Chambasi","Gian Orgeness Massawe","Leon Defender Joseph","Liam Keith Bethuel","Nazran Salehe Omari","Princearim Priscus Kimaro","Tamim Bakari Kila","Treasure Walter Luvanda","Tyler Emmanuel Msuya"],"Kg1_Ilboru":["Cassandra Samson Lotha","Collins Benignus Ngowi","Eliana Luwikyensia Mushi","Elon Faustini Mmari","Gianna Paul Gitigan","Jayden Elly Mavanza","Jayden Ernest Lomayan","Loduvo Merinyo Kivuyo","Mahnoor Faraji Adam","Michelle Emmanuel Mollel","Muhammad Daudi Nkwama","Raniah Vijay Topiwala","Ryan Frank Baguma","Sidney Goodluck Kimaro"],"Kg2_Ilboru":["Christabella Godwin Gadi","Eberi Philipo Manyama","Francois Godfrey Matare","Gabriel Otto Massawe","Geovany Faustine Mmari","Godface Alex Wenga","Hollyness Elitira Uronu","Jilly Nenjivai Baraka","Maverick Deodatus William","Mwanakombo Abdul Urio","Shanelle Daniel Kabora"]},"Kijenge":{"Daycare Kijenge":["Abigael Jordan Kivuyo","Aiden Antoni Mtui","Alver Rick Moiro","Asim Alquam Bwakila","Ayman Ally Kaine","Bilal Tariq Saidi","Brenda Daniel Megwani","Caleb Andrew Marwa","Chadwick Faraja Ngomuo","Gabriella Godwin Urio","Harrison Josephat Tango","Ivan Elimringi Mbise","Janelle Marko Makolobela","Jemimah Peter Malak","Khahil Rashid Pallagyo","Khair Rashid Pallangyo","Lee Linus Woisso","Mellisa Richard Mollel","Ronel Jovinus Josephat","Serene Leopold Sumawe"],"Kg1_Kijenge":["Aariz Alquam Bwakila","Arielle Nelson Meena","Briant Boniface Mwaisabila","Briden Boniface Mwaisabila","Faith Andrew Kerenge","Felix Hamad Mshana","Finley Emmanuel","Graham Mwenda Mutuku","Jayden Emmanuel Mamuya","Joline Kelvin Mshingie","Jonathan Andrew Marwa","Khadya Inaya Pallangyo","Lucas Elikana Juma","Michelle Oscar Mosha","Millan Godfrey Magari","Njarita Hamisi Njarita","Pharrell Alfred Chelele","Renelle Japhet Naftal","Rodrick Moses Kahana"],"Kg2_Kijenge":["Alvin Kelvin Mollel","Amara Eden Tarimo","Ben Gift Laizer","Geovanne Godlizen Tillya","Gian-emmanuel Kimbay","Harris Zaki Munishi","Isabella Daniel Megwani","Jylen Benjamin Fredy","Lara Clemence Massawe","Raelyn Michael Thomas"]},"Usa River":{"Daycare_Usa_A":["Aaliyah Abbas Selemani","Abraham Adrian Maganga","Addilyn Reuben Pallangyo","Alice Lawrence Massawe","Allen Hillary Saidia","Amandagrace Benjamin Zephania","Amayra Allen Mlay","Arabella Frank Marandu","Axel Deogratius Massaga","Benson Marko Isuja","Bivan Baraka Majundo","Bravo Jackson Mafie","Brayden Nadhiri Gunda","Brayton Eron Laizer","Brielle Mutatiro Kumbata","Brighton Timotheo Paul","Bryson Amani Kiwelu","Catherine Godlove Akyoo","Christian Mwita Mataro","Clarissa Makoye Sulwe","Comfort Julius Mndeme","Daviana David Manongi","Ella Ibrahim Mcherecheta","Exaudi Tegemea Exaudi","Gebharb Peter Charles","Genesis Goodluck Mollel","Gian Damas Mbise","Gianna Erick Eliakim","Gidion Erick Mjuni","Glory Yusuph Mushi","Gracious Grayson Nanyaro","Ibitisam Bakari Mcharo","Jacobi Lazaro Lazaro","Jayden Joel Sumari","Jaydeny Denice Kayan","Jayson Godbright Kitomari","Jeffrey Henrico Donald","Jehan Donath Tesha","Julius Godfrey Masolwa","Kendrick Goodluck Shayo","Kezia Gibson Steward","Lincoln Peter Kisomer","Malcolm Ayubu Mollel","Meleck Kilusu Mattasia","Michelle Michael Gombe","Nadya Salum Shomari","Nolan Mathew Sichilima","Phyllis Lameck Mushailizi","Prince Baraka Lema","Purity Issai Malimbwi","Rodney Onesmo Wilfred","Sadick Mohamed Msangi","Samia Shamiton Leinairowa","Tracy Aziz Swai","Treasure Elisha Mbise","Trinity Loth Mathayo","Uriel Deogratias Massaga","Valor Emmanueli Pallangyo","Wesna Weston Kambele","Xylia Jephason Ayo"],"Kg1_Usa_A":["Aksa Charles Nangai","Alvan Sweerbert Ndoloba","Andreas Patrick Issangya","Benice Charles Mullo","Bless-bahati Randall Stubbs","Catherine Respig Salvatory","Collin Erick Mollel","Dagomis Gidahudya Loghemajega","Elsie Elikunda Kisanga","Fortunata Onesmo Ntila","Gadiel Erick Kitutu","Heavenlight Frank Migwara","Janelle Severin Msaki","Joan Justin Ringo","Johnson Nuru Kaaya","Johnson Samwel Nanyaro","Kenzo Spatro Nnko","Kylie Goodluck Nnko","Megan Mwandale Mgongolwa","Michelle Peter Akyoo","Nadia Bakari Ally","Shuwenu Gidagoku Ginanani","Talia Israel Pallangyo","Travis Aziz Swai","Yahya Haji Yahya"],"Kg1_Usa_B":["Abigail Frank Mbise","Acsa Leodguard Mlay","Alberto Osca Venance","Amora Reward Minja","Athena Livingstone Gilbert","Carolin Baraka Mafie","Crixus Eliud Pallangyo","Daniel Peter Manongi","Elvis Mark Shoo","Emanuel Thomas Laizer","Felicia Elisha Masangwa","Giavanna Elisante Mungure","Giovanna Elisante Mungure","Giovanni Peter Charles","Griffin Fredrick Massawe","Hannah Petro Mwinjuma","Joel Geofrey Mollel","Jotham Joel Sawe","Kenji Frank Teuling","Leonne Sainga Sedoyeka","Naisiligaki Japheth Sikorey","Rogerson Rogers Swalle","Ryan Damas Gervas","Udamakili Munduki Hirja","Vissionary Emanuel Pallangyo"],"Kg1_Usa_C":["Abigail Ansifrid Lekundayo","Abriana Obed Nnko","Arafat Karim Machake","Ariana John Lenson","Aseembusara Rajabu Naroro","Bevan Benson Kaaya","Celine Philip Makungi","Cuthbert Respig Salvatory","Damaweni Gidaguy Jorojiga","Erick Rojas Gidion","Ethan Christopher Mdope","Gabriella Gudluck Mollel","Glory Peter Gwabo","Hanifah Wiliam Mnyika","Harvey Josephat Hayuma","Healson George Magogo","Ian Ombeni Pallangyo","January Julius Laizer","Jovan Allen Godian","Julieth Goodluck Mollel","Prosper Msafiri Mayaya","Shedrack Elifuraha Laizer","Talia Timotheo Mnzava","Tellivn Stanley Nchanakalilo","Utepta Girgis Sedoyeka","Wendy Maole Kessi"],"Kg2_Usa_A":["Alice Hillary Saidia","Anderson Amani Mogoile","Brighton Bosco Nassary","Charlotte Hunter Mushi","Christen Fred Lubida","Devet Rishael Kitomary","Divine Grace John Mbise","Gianna Behost Kyara","Gillie Godfrey Saro","Glory George Nyiti","Hefsiba Edwin Pallangyo","Highness Evarist Mnyaga","Hilda Peter Waswa","Jackson Isaya Lendorome","Janice Goodluck Mollel","Jett Timoteo Swai","Mourine John Nnko","Primrose Rhodice Moshi","Princess Simoni Timotheo","Rebeka Shevednaze Mwakyokola","Shane Pierre Feys","Sulvan Emmanuel Nnko","Tiffany-hollie Emmanuel Ngolinda","Timmy-ellie Emmanuel Ngolinda","Wendy Weston Kambele"],"Kg2_Usa_B":["Alvin Sisty Massawe","Careen Elia Edward","Carmila Nicolous Nnko","Charlotte Cosmas Mushi","Deogratius Elisha Sarakikya","Dylan Frank Mlemwa","Eagan Emmanuel Kitto","Eliana Peter Sumari","Eugenie Obed Yangisinye","Gian Motuku Mololo","Gianna Bahati Mbise","Goodluck Isaack Titus","Jensen Johnson Ndossy","Jonathan Elisha Mugini","Kenisha Emmanuel Sumari","Maurice Michael Mgulu","Myla Michael Mkufya","Naomi Elipokea Nassary","Nathan Zephania Mtango","Prince Msafiri Mayaya","Samwel Daniel Laizer","Shabani Issa Kibwana","Trixie Elisha Mbise","Udamjini Yaya Balawa","Valeria John Emmanuel"],"Kg2_Usa_C":["Alaia Zabron Mwita","Alexa Livingstone Gilbert","Alvin Alex Danga","Briella Zefania Baruvuga","Candy Calvin Munge","Carleen Faraja Njoka","Charissa Joseph Ngira","Daylan Kanige Eliakim","Eleanor Edward Rothbletz","Elia Aloyce Mushi","Ellen Eliwo Sumari","Ethan Ally Mbunda","Faith Abel Shilil","Flavia Hillary Fulgence","Jayla John Lyimo","Michelle Sifuni Urio","Mickey Edward Ayo","Nicences Wiliely Roman","Nossim Isaya Lendorome","Prince Izack Mbise","Ryan Hashim Nangali","Torres Kanaeli Pallangyo","Udamaharu Ngidafreyoda Seroyeka","Udamawa Mginangi Khamariri"],"Kg2_Usa_D":["Ally Twaha Maguluko","Amaramartha Innocent Kisoka","Andrew Kelvin Bernad","Aneesa Mwika Kabongo","Ariel Mungele","Ashfarayna Abubakari Mleli","Bella Mungele","Charlotte Absalom Mungure","Colette Absalom Mungure","Eian Elia Lemboto","Eliana Andrew Yamsebo","Eliana Tula Kiwovele","Haitham Abtwalib Ngua","Ian Calvin Lema","Ian Jackson Mafie","Jakonia Julius Laizer","Johnson David Mshana","Junaid Jafari Mussa","Kauthar Hussein Hamza","Nayra Nelly","Tristan Emanuel Tsingay","Winner Abraham Kitomary"],"1A":["Abdulkareem Abdallah Mwendaa","Aziel Dickson Akyoo","Bernadetha Jeremiah Sarungi","Davis Peter Nsomi","Doreen Ephata Nanyaro","Elishama Juma Chuma","Elliot Matthew Kaijunga","Elyn Elia Lemboto","Emmanuel Denis Randa","Faris Ramadhan Salum","Gratitude Jackson Maingu","Jayleen Jeremiah Kitomari","Johan Cyril Mtei","Julieth Philbert Mbeleya","Juniour Yustino Mathias","Kendrick Denis Kapele","Laurah Jeremiah Pallangyo","Lucy Sadira Lekhshon","Maryjenitha Kelvin Nyavanga","Morice Julius Mkomwa","Naysa Spatro Nnko","Nisagurwe Edison Lubua","Ramses Goodluck Twazera","Rian Godlove Kirimbo","Tawfiq Mohamed Madati","Travis Jovin Mukisa","Udageleda Gidausenda","Udamushungulu Nyanda","Venus Oward Pastory"],"1B":["Aisha Hamis Izadin","Ayden Frank Mnzava","Brighter Liasi Siriagi","Brightness Francis Shio","Bryden Sifuni Maphie","David Nestory Alphonce","Ebenezer Lameck John","Eliana Tegemea Exaud","Faraja Emanuel Ayo","Fardeen Iqbal Shah","Gabriela Gabriel Mrema","Gian Gervas Samiji","Gianna Frank Muganyizi","Grecious James Urio","Harika Gidion Chaligha","Ivan Godlove Malya","Joan Benjamin Ayo","Jovin Jackson Shrima","Kessia Andrew Kitaly","Milcah Charles Samweli","Nabeel Alex Pasika","Nathan Melkizedeck Munguahali","Naveen Benjamin Alphonce","Precious Mark Kitomari","Samairah Hamis Msuya","Udamakili Gidumboru","Vivan David Ngowi"],"1C":["Abigail Deogratius Massaga","Alvah Msafiri Allen","Azariah Leodguard Kimaro","Bryan Erick Lyimo","Camilla Fitiael Ayo","Christian Philemon Lazaro","Claudia Colman Robert","Daniel John Mbise","Edric Mark Shoo","Elvin Msafiri Mushi","Eunice Erasto Mguna","Fahad Shaban Muya","Given James Urio","Ivan Nathanael Urassa","Izzan Mshangama Nyangasa","Lobulu Lemamai Laizer","Mustafa Issa Haji","Nadupa Shamiton Leinairowa","Naihoo Sambeta Mollel","Nairoshi Musiando Makeseni","Nicole Elisante Mungure","Patrick Egine Kalugendo","Prominence Rhodice Moshi","Sydney Nock Shagata","Trinity Issai Malimbwi","Uchamu Gidabisandenyi","Xavier Eliud Pallangyo"],"1D":["Adrielle Deogratius Massaga","Alessandro Osca Venance","Andric Allen Godian","Avigayil Atubwene Mwaisumo","Baraka George Nyiti","Clara Boniface Mwilenga","Ethan Mirisho Joshua","Gabriela Elia Mbise","Gianna Eliezer Taluka","Gianna Innocent Shayo","Hellen Zakaria Mkeve","Ivy Martin Mkea","Jordan Francis Udio","Kelvin Izack Pallangyo","Kendrick Godstone Gelleo","Mike Peter Kiula","Precious Emanuel Sarakikya","Riziwani Damiani John","Rogate Philemon Laizer","Saimon Joel Pallangyo","Samwel Peter Gwabo","Sophia Hassan Ucheche","Udang'alda Seburi","Uspitari Gidagwelgwa Jorojiga","Yashraji Moses Nonga","Yusra Ahmad Gido"],"2A":["Annacharity Victor Wiketye","Birgitta Prosper Mushi","Bless Ashraf","Chrispin Yuda Pallangyo","Christian Wainaina Maro","Clinton Stephen Auner","Daghajati Gidametida","Daniel Moses Pallangyo","Dorothea George Msuya","Emmaliny Erick Ayo","Faith Elisha Masangwa","Giftiana Elisante Kaaya","Herbeth Nicolaus Nkoe","Ian Richard Mwasakitili","Isabella Aloyce Shirima","Joan Sabaya","Kendrick Anselm Nyenza","Levis Larick Mtui","Mahesh Naftali Lukindo","Manangi Gidagwareda","Maynard Boniface Mwasi","Mecline Wiliely Shayo","Myra Singa Seif","Prisca Gabriel Mungure","Rahim Said Kawawa","Ramadhan R. Shaban","Raphaela Filbert Momburi","Robert Rickson Mollel","Udagorjoda Gidabasoda","Udaqwashiy Qenyares Sedoyeka"],"2B":["Alen Alex Pallangyo","Aviel Erick Mayunga","Brissa Benjamin Mwaole","Doreen Gidion Mollel","Erin Erick Mjuni","Faidra Aloyce Bukwimba","Gamaliel Oliver Opilio","Gemmalyn Peter Shayo","Grace Michael Lemilya","Honester Ephrahim Kimario","Jacob Ibrahimu Awe","Jael Emanuel Munis","Jayden Gidion Minja","Jayden Johnson Ndossi","Jayleen Innocent Molla","Joleen Emanuel Mbuya","Jovin Aminiel Mbise","Kendrick Fortune Nnko","Leeroy Aristides Kessy","Lilac Israel Pallangyo","Nathan Emmanuel Ngolinda","Nicholas Peter Isaay","Precious Severan Oisso","Prisca Solomon Philipo","Success Steven Sikawa","Tedrick Emanuel Tsingay","Udagatayega Hegwan Sedoyeka","Udamedeba Malinga","Wisdom George Mringo","Zion Emmanuel Swai"],"2C":["Adiella Kilusu Mattasia","Alan Owen Kiluwa","Arianna Godlove Kirimbo","Cassie Livinus Simon","Charlotte Evance Niwael","Clifford Daniel Nnko","Dagemnyeni Girish Sedoyeka","Damela Qenyares Sedoyeka","Danton Elidaima Nassary","Daudi Shamiton Lenairowa","Delight Alex Wenga","Donald Zefania Baravuga","Ethan Imani Baharia","Glory Harun Mfilinge","Hanniel Erick Kitutu","Irene Erick Kemanzi","Ivana Sewangi George","Iven Steven Kissier","Janeth Zadock Mafie","Jenifer Denis Joel","Joel Godfrey Kidemi","Latoya John Ryakitimbo","Maureen Sadira Lekhshon","Megan Wilbard Mruma","Meleji Lesseriani Laizer","Paxton Joseph Sumari","Trisha Obadia Mbise","Udamang'ala Hombo Rumay","Usaqwareda Hombo Rumay","Willium Justin Mushi"],"3A":["Abraham Tula Kiwovele","Agatha Reinhard Kimaro","Akeem Mwika Kabongo","Alice Emanuel Akyoo","Dorcas William Madeni","Dreshal Elidaima Nassari","Enock Kairongi Naremiho","Ethan Cosmas Mushi","Ethan Erick Ayo","Fidel Godwin Kaaya","Goodluck James Mlali","Huruma John Lukumay","Ines Elirehema Akyoo","Ivan Michael Semu","Jesca Timotheo Karanga","Joseph Paul Daudi","Laureen Daniel","Loyce Mark Kitomari","Mercy Kanael Akyoo","Michelle Grace Nassari","Normopoi Musesei Lamanyana","Prince Omari Zuberi","Robert Mohamad Hassani","Ryan Paul Mangare","Sairath Salim Sangali","Shillo Lyanga Shanalingigwa","Udamasti Gidagugi Jorojiga","Udangwega Gasanoga Washan","Udogoduw Gwadenu Asechek","Ulakta Gidisangu Sikay","Veronica Comfort Swai","Winnlady Peter Akyoo","Zuhura Karim Machake"],"3B":["Abigail Peter Manongi","Avni Sweetbert Ndoloba","Brigita Nicomedi Paulo","Bruno Sylvester Nyangaka","Cecilia John Swai","Charity Keloi Laizer","Clara Skylar Primi","Daniel Antony Chowelela","Darren Casmiri Shija","Dennis Albert Grayson","Elinazi Mussa Sesinga","Ephraim Paul Mrutu","Ethan Sifuel Akyoo","George John Makwale","Glory Emmanuel Sarakikya","Godbless Jephason Akyoo","Golden Rey Sawaya","Ivan Wilson Manongi","Ivana Mwigamba Fabian","Jenesta Amani Nanyaro","Joseph Wiliam Ayo","Lilian Zephania Mtango","Madeline Albright Andanda","Mariam Abdallah Hussein","Megan Fred Nkwande","Meghan Emmanuel Kitto","Meshack Opilio Kaaya","Moureen Iman Lipuka","Nehemiah Charles Samweli","Nossim Paul Leksa","Purity Adelphinus Gabone","Udamawasa German Sedoyeka","Udaskwer Musa Erick"],"3C":["Alice Adrian Maganga","Amaris Albert Maeda","Andrey Owen Kiluwa","Baraka Rajabu Mahaja","Christabella Fred Lubida","Christian Elisante Ayo","Christian Manase Mlumba","Crispin Baraka Mafie","Ebenezer Elia Mbise","Eileen Deogratius Kessy","Genevieve Peter Shayo","Gillian Deogratias Paul","Goodluck Frank Kileo","Grace Lameck John","Henry Innocent Mosha","Jayden Jeremiah Kitomari","Jenis Andrukus Kasera","Jeremiah David Mshana","Jonathan Jeremiah Sarungi","Kenrick Eliud Pallangyo","Lourin Calvin Lema","Melvina Nadhiri Gunda","Milka Elirehema Mbise","Mylah Andrew Mariki","Nengai Tomboi","Praygod Filex Julius","Prisca Sabai Masosota","Samori Sankofa Harper","Udagyhanga Gogo Bujuta","Udamakili Gidobati Sedoyeka","Vanesa Simon Saileu","Vaneth Vanes Sango","Vicent Kaiko Saudi"],"4A":["Abigail Fredrick Komba","Agrey Abedi Kimaro","Aurelia Shevednaze Mwakyokola","Benjamin Franael Mbise","Brighton Evance Wawa","Brilliant Majundo Mussa","Caleb Leodguard Sereha","Christina Ezekiel Kimaro","Clifford Abdon Mahila","Faraja Simon Akyoo","Franklin Jonas Sarakikya","Godwin Isaack Titus","Heavenlight Clemence Godluck","Jemima Mathayo Mranga","Joan Erick Urioh","Joanna Jackson Peter","Joshua Kelvin Mshingie","Jubilate Henrich Pallangyo","Lania Saidy Hamisi","Lightness John Ngereza","Loseriani Alaitetei Laltaika","Louis David Demetry","Malcolm Joseph Ndeketera","Mathew Kilusu Mattasia","Matias Herry Pallangyo","Meshack Gelvas Paulo","Michael Elibariki Kaaya","Natalia Naftali Lukindo","Patrick Elibariki Mbise","Pili Juma Mshana","Queenbless Daniel Mwamba","Ryan Joachim Marandu","Sayuni Lemelenda Loning'o","Solace Richard Konga","Udamuqu Ginongineji Sedoyeka"],"4B":["Abubakari Hussein Manyonga","Andy Henry Moshy","Anjelica John Aloyce","Annie Wakuru Magigi","Brightness Aminiel Mbise","Christian Nicholaus Nnko","Daniel John Swai","Daniel Vaness Sango","Demetria Demetrius Kessy","Duncan Victor Kisamo","Elifuraha Frank Mariki","Eliphas Edward Mkumbo","Emmanuel Deo Mushi","Etan Ipyana","Faith Aloyce Bukwimba","Faith Zakayo Sumari","Faizal Mohamed Kabongo","Geevan Amos Kitundu","Gracious Johnson Joshua","Imanranda Harris Deya","Isabella Alfred Shirima","Ivan Frank Lyimo","Joan Anathe Pallangyo","Lugendo Victor Wiketye","Maregesi Edison Lubua","Millard Yusto Swai","Miriam Kaiyosi Olopono","Reagan Sunday Mbise","Rodney Moses Kahana","Ryan Anold Joseph","Sharisa Omar Mtunguja","Tabitha Robert Laurent","Thawabu Rajabu Naroro","Ulenga Qenyaresi Sedoyeka","Uteroida Girgis Sedoyeka","Valerian Wangael Kaaya","Zakayo Ezekiel Lengisho"],"5A":["Allan Elirehema Mbise","Althea Joel Balisidya","Alvin Sweetbert Ndoloba","Anitha Obed Nnko","Bellen Charles Mullo","Christopher Absalom Mungure","Clara Nicholaus Nnko","Courage Gao Jincai","Divine Nickson Urassa","Elia Linus Lyimo","Eliachi Tegemea Exaud","Elisha Holyday Makule","Eliya Anathe Mungure","Elliot Edward Rothbletz","Erica Erick Joseph","Ethan Msafiri Mushi","Gabriel Emmanuel Gambi","Genevieve Jastine Sarro","Gift Kenedy Lema","Glory Abisai Swai","Joel Jeremians Kepha","Jonas Joseph Jastus","Jovin Michael Pallangyo","Luis Charles Hotay","Naserian David Loosurutia","Nathan Paschal Shayo","Niwaeli Deo Tarimo","Peace Elipokea Nassary","Presious Sadock Jacob","Prince Amir Muya","Queen Franciss Bureter","Richard Majiba Shema","Sara Isaya Sapuro","Victoria James Mlali","Yohana Vincent Andrea"],"5B":["Alicia Adrian Maganga","Alvin Aloyce Shirima","Anna Mbayani Sapiyo","Beatrice Ephata Nanyaro","Bryson Nestory Dagharo","Christabella Christopher Mollel","Dalia Souradjou Alassane","Daudi Reuben William","David Reuben Pallangyo","Delvin Denis Ringo","Diana Kambona Kidagayo","Digoya Amani Mogoile","Glory Baraka Mbise","Godlisten Abrahaman Shangali","Godliver Cyril Mtey","Goodluck Daniel Mwamboneke","Grace Talia Isabwa","Hadija Hamidu Kayanda","Hadrianna Marcel Itambu","Happyness Cuthbert Mbowe","Imran Mshangama Nyangasa","Isaka Meleji Lonyoki","Jenifer Julius Laizer","Jennifer Richard Konga","Jeremiah Charles Samweli","Josephine Stephano Agustino","Jovin Joakim Mushi","Kendrick Andrew Kitaly","Megan Mathew Kishili","Mercy Abraham Mungure","Miguel Michael Mkufya","Nicole Leonard Makali","Prince Leonard Shayo","Samwel Victor Shuma","Sayuni Joeli Pallangyo","Shonsi Lyanga Shanalingigwa","Stephano Seuri Ngoilenya","Zuber Ramadhani Muhina"],"6A":["Agape Elibariki Mafie","Agness Owen Kiluwa","Baraka Loomai","Derick Richard Mwasakatili","Dorcus Pastory Kiria","Esther Pellagy Marandu","Ethan Emmanuel Ngolinda","Eunice Paul Mrutu","Faith Robert Severe","Florence Agael Titus","Gadson Vicent James","Gidion Frank Ulomi","Glory Elia Mbise","Goodhope Godluck Kweka","Happyness Dickson Tamba","Ian Steven Kissier","Ivan Elirehema Akyoo","Jael Godfrey Kidemi","Jason Fred Nkwande","Jeremiah Edward Chiwute","Jessica Mourice Mzalia","Joshua Emmanuel Pallangyo","Jotham Jackson","Jovan Julius Laizer","Lisa Elisante Massay","Mikhael Kilusu Mattasia","Nathan Humphrey Ndossi","Sanare Songoyo Laizer","Shabani Juma Juma","Yudia Isaya Msupi","Zakayo Ngarimi Kititi"],"6B":["Adam Ayubu Kaaya","Angelove Elibariki Paulo","Athuman Mzee","Daniel Jonas Sumary","Daniela Vanes Sango","Diana Geofrey Daniel","Emanuel Ezekiel Mwanga","Enrica Deogratius Kessy","Fortunata Paul Marko","Gina Aristides Kessy","Gracious Loth Kivuyo","Hafidh Mohamed Siraji","Ian Geofrey Moses","Joan Fredrick Kitomary","Linda Noel Pallangyo","Maria Bakari Selua","Meshack Kanael Akyoo","Meshack Peter Laizer","Nabeel Siraji Msophe","Ndetaulwa Francis Pallangyo","Neema Bonifas Temu","Omary Salimin Hassan","Pendo Francis Pallangyo","Precious Amos Mollel","Precious Humphrey Kaaya","Ramson Olaicy Lowasa","Ravid Raphael Shekibula","Richard Paul Kateketa","Robin Charles Opiyo","Samson Joseph","Shareen Viva Rutabanzibwa","Vanessa Larick Mtui","Yusuph Justine Zakaria"],"7A":["Aaron Andrew Yamsebo","Agustino Martine Massawe","Alberto Aristides Kessy","Amalia Anande Moses","Angelina John Safari","Briana Boniface Mwassi","Careen Ombeni Ndossi","Christopher Victor Wiketye","Enrique Deogratius Kessy","Ethan Hubert Lema","Farha Hussein Mikina","Glory Marcel Itambu","Irene Emmanuel Kisimba","Jackline Andrew Kannonyele","James Urlick Ndunguru","John Batholomew Robert","Judith Goodluck Mollel","Kinyilai Ngarimi Kititi","Laura Stephanie Primi","Moureen Laurent Muhela","Mussa Makashi Matakanyanga","Noela George Mringo","Norah Elihuruma Maimu","Olivia Terevaeli Mbise","Praygod Frank Mollel","Praygod Kikois Eliphas","Precious Bernard Kagasheki","Precious Farijala Chitanda","Pricila Gamalieli Kaaya","Salha Salim Sangali","Samweli Joeli Pallangyo","Sean Hamza Tengu","Sophia Hamza Wenga"],"7B":["Angel Justine Ernest","Austin Aristides Kessy","Daniel Rocky Laizer","Danken Tyler Martin","David Emmanuel Lukuba","Desmond Russel Temu","Dexter Joel Balisidya","Elson Boniface Msangi","Ethan Nathaniel Urassa","Frida Tuzo Teri","Gian Thomas Temba","Glory Peter Laizer","Grace Emmanuel Oisso","Hariet David Mang'ehe","Hytham Idd Ally","Ilham Bakari Mcharo","Imran Omary","Iqram Faraji Tupa","Isaac Eliapenda Mollel","Janeth Joakim Mushi","January Daniel Mirisho","Joackim Batholomew Robert","Joel Emanuel Mbuya","Lisa Jephason Akyoo","Livart Emmanuel Pallangyo","Lizbeth Fredy Nyakamuga","Mansour Mohamed Kambi","Mulk Majidi Juma","Prisila Richard Sumari","Purity Riziki Raphael","Rosemary Peter Mwaijande","Rukia Mussa Mwessongo","Winifrida Thadey Mapunda"],"Unassigned":["Elgiver Brown Mwashambwa","Glory Titus Sakaya","Mulhati Majidi Juma"]}};
+const VALUES = ["Respect","Responsibility","Kindness","Effort","Leadership","Honesty","Teamwork","Excellence"];
+
+const T1_BASE = ["Proximity","Non-verbal cue","Precise praise of exemplar behaviour","Lightning-quick correction","Student redirected","Warning","Moved to a different spot in the room","Loss of privileges","Reflection sheet","Restorative dialogue","Affective statements / questions"];
+const T2_BASE = ["Phone call home","Detention / loss of recess","Sent to buddy class to reflect","Community service","Impromptu circle","Allow venting, if possible","Offer choices and set limits"];
+const T3_BASE = ["Saturday school","Behaviour chart","Character-building project","Detention","20-minute workout","Parent shadow","Formal behaviour plan","Behaviour contract","Alternate placement"];
+const T1_LIGHT = ["Proximity","Non-verbal cue","Precise praise of exemplar behaviour","Lightning-quick correction","Student redirected","Warning","Moved to a different spot in the room","Restorative dialogue","Affective statements / questions"];
+const T2_NOBUDDY = ["Phone call home","Detention / loss of recess","Community service","Impromptu circle","Allow venting, if possible","Offer choices and set limits"];
+
+const BEHAVIOURS = [
+{n:"Defiance / Non-compliance", d:"Defiance, failure to follow directions, or talking back.", t1:T1_BASE, t2:T2_BASE, t3:T3_BASE},
+{n:"Disrespect", d:"Socially rude messages to adults or students.", t1:T1_BASE, t2:T2_BASE, t3:T3_BASE},
+{n:"Disruption", d:"Inappropriate disruption of learning.", t1:T1_BASE, t2:T2_BASE, t3:T3_BASE},
+{n:"Inappropriate Language", d:"An instance of inappropriate language.", t1:T1_BASE, t2:T2_NOBUDDY, t3:T3_BASE},
+{n:"Physical Contact / Verbal Aggression / Bullying", d:"Non-serious but inappropriate physical contact or verbal remarks. Aggression with intent to injure, bullying or harassment is Tier 3.", t1:T1_BASE, t2:T2_BASE, t3:T3_BASE.concat(["Suspension","Expulsion"])},
+{n:"Property Misuse / Vandalism", d:"Misuse of school or others' property.", t1:T1_BASE, t2:T2_NOBUDDY.filter(x=>x!=="Allow venting, if possible").concat(["Pay to replace damaged property"]), t3:["Saturday school","Character-building project","Detention","20-minute workout","Formal behaviour plan","Behaviour contract"]},
+{n:"Technology Violation", d:"Inappropriate use of technology (phone, music, games, camera, computer).", t1:T1_BASE.map(x=>x==="Loss of privileges"?"Loss of privileges for the day (iPad / computer)":x), t2:["Phone call home","Loss of privileges for the week (iPad / computer)","Detention / loss of recess","Community service","Impromptu circle","Offer choices and set limits"], t3:["Loss of privileges for a month or more","Saturday school","Character-building project","20-minute workout","Formal behaviour plan","Behaviour contract"]},
+{n:"Lying / Cheating", d:"Delivering an untrue message, or copying someone else's work.", t1:T1_BASE.map(x=>x==="Loss of privileges"?"Loss of privileges (e.g. 0 on test, miss school events)":x), t2:T2_NOBUDDY, t3:["Character-building project","Alternate placement","Detention","Saturday school","Formal behaviour plan","Behaviour contract","In-house suspension","Suspension","Expulsion"]},
+{n:"Confrontational / Defensive", d:"Engaging verbally face-to-face in an inappropriate way; anxious to challenge or avoid criticism.", t1:T1_BASE, t2:T2_BASE, t3:["Saturday school","Behaviour chart","Restorative practice","Parent shadow","Formal behaviour plan","Behaviour contract","Alternate placement","Detention / loss of recess"]},
+{n:"Stealing", d:"Taking something that is not yours without permission.", t1:T1_BASE.concat(["Replacement of item","Phone call home"]), t2:T2_NOBUDDY, t3:["Saturday school","Behaviour chart","Restorative practice","Parent shadow","Formal behaviour plan","Behaviour contract","Alternate placement","Suspension","Expulsion"]},
+{n:"Out of Seat", d:"Wandering or roaming without permission to leave seat.", t1:T1_LIGHT, t2:["Loss of privileges (e.g. field trips, school events)","Reflection sheet","Phone call home","Impromptu circle","Allow venting, if possible","Offer choices and set limits"], t3:["Detention / loss of recess","Community service","Behaviour chart","Parent shadow","Escalate as Defiance (Tier 2/3)","Character-building project","20-minute workout"]},
+{n:"Impulsive", d:"Acting without forethought of consequences.", t1:T1_LIGHT, t2:["Loss of privileges (e.g. field trips, school events)","Reflection sheet","Phone call home","Impromptu circle","Allow venting, if possible","Offer choices and set limits"], t3:["Detention / loss of recess","Community service","Behaviour chart","Parent shadow","Problem-solving / harm circle","Character-building project","20-minute workout"]},
+{n:"Low / No Work Completion", d:"Little to no work done in an appropriate time frame.", t1:T1_LIGHT, t2:["Loss of privileges (e.g. school events)","Detention / loss of recess","Sent to buddy class to complete work","Phone call home","Impromptu circle","Offer choices and set limits"], t3:["Detention / loss of recess","Saturday school","Behaviour chart","Character-building project","20-minute workout","Parent shadow","Formal behaviour plan","Behaviour contract"]},
+{n:"Inappropriate Display of Affection", d:"Inappropriate verbal and/or physical gestures or contact of a sexual nature.", t1:T1_BASE.concat(["Phone call home"]), t2:["Stay-away agreement","Phone call home","Loss of privileges (e.g. school events)","Impromptu circle","Detention / loss of recess"], t3:["Saturday school","Detention / loss of recess","Character-building project","20-minute workout","Parent shadow","Behaviour contract"]},
+{n:"Arson", d:"Planning and/or participating in malicious burning of property.", t3only:true, t1:[], t2:[], t3:["Saturday school","Character-building project","Parent shadow","Formal behaviour plan","Behaviour contract","In-house suspension","Suspension","Expulsion"]},
+{n:"Drugs / Alcohol / Tobacco / Weapons", d:"Possession, use or display of tobacco, alcohol, narcotics, weapons or chemicals.", t3only:true, t1:[], t2:[], t3:["Saturday school","Character-building project","Detention / loss of recess","Parent shadow","Formal behaviour plan","Behaviour contract","Suspension","Expulsion"]}
+];
+const ADMIN_STEPS = `<div class="note alert" style="margin-top:10px"><b>Tier 3 — Administrator managed.</b> This record is flagged as a <b>Major referral</b>.</div>
+<ol class="admin-steps">
+<li><b>Submit referral as Major</b> — communicate privately with the Administrator.</li>
+<li><b>Conference</b> — student / administrator; administrator investigates.</li>
+<li><b>Consequence</b> — logical consequence enforced by admin; admin contacts parents; referral information sent home.</li>
+<li><b>Re-entry</b> — admin decides readiness, escorts student back; teacher/student mini-conference to rebuild the relationship.</li>
+</ol>
+<div class="small">Restorative practices to consider: problem-solving or harm circle · character-building projects.</div>`;
+
+/* ================= STATE ================= */
+const LS = {set:'sla_bt_settings', q:'sla_bt_queue', hist:'sla_bt_synced'};
+let settings = load(LS.set, {name:'', campus:'', url:''});
+let queue = load(LS.q, []);
+let hist = load(LS.hist, []);
+let inc = null, rec = null, incStep = 1, recStep = 1;
+
+function load(k, d){ try{ const v = JSON.parse(localStorage.getItem(k)); return v==null?d:v; }catch(e){ return d; } }
+function save(k, v){ localStorage.setItem(k, JSON.stringify(v)); }
+function uid(){ return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,9); }
+function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(t._x); t._x=setTimeout(()=>t.classList.remove('show'),2600); }
+function esc(s){ return String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* ================= NAV ================= */
+function go(s){
+  document.querySelectorAll('.screen').forEach(x=>x.classList.remove('on'));
+  document.getElementById('scr-'+s).classList.add('on');
+  document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.remove('on'));
+  const map={home:'tab-home',queue:'tab-queue',set:'tab-set',rec:'tab-rec',inc:'tab-home'};
+  const tb=document.getElementById(map[s]||'tab-home'); if(tb) tb.classList.add('on');
+  if(s==='home') renderHome();
+  if(s==='queue') renderQueue();
+  if(s==='set') renderSettings();
+  window.scrollTo(0,0);
+}
+
+/* ================= SETTINGS ================= */
+function renderSettings(){
+  document.getElementById('set-name').value = settings.name||'';
+  const sel = document.getElementById('set-campus');
+  sel.innerHTML = '<option value="">— choose campus —</option>' + Object.keys(ROSTER).map(c=>`<option ${settings.campus===c?'selected':''}>${c}</option>`).join('');
+  document.getElementById('set-url').value = settings.url||'';
+}
+function saveSettings(showMsg){
+  settings.name = document.getElementById('set-name').value.trim();
+  settings.campus = document.getElementById('set-campus').value;
+  settings.url = document.getElementById('set-url').value.trim();
+  save(LS.set, settings);
+  updateHdr();
+  if(showMsg){ toast('Settings saved'); go('home'); }
+}
+function updateHdr(){
+  document.getElementById('hdrsub').textContent = settings.campus ? `${settings.campus} · ${settings.name||'Teacher'}` : 'Silverleaf Academy';
+}
+function needSetup(){
+  if(!settings.name || !settings.campus){ toast('First add your name and campus in Settings'); go('set'); return true; }
+  return false;
+}
+
+/* ================= HOME ================= */
+function todayKey(){ const d=new Date(); return d.toISOString().slice(0,10); }
+function localToday(r){ return (r.localDate||r.ts||'').slice(0,10) === todayKey(); }
+function renderHome(){
+  const all = queue.concat(hist);
+  const today = all.filter(localToday);
+  document.getElementById('st-pos').textContent = today.filter(r=>r.type==='Recognition').length;
+  document.getElementById('st-neg').textContent = today.filter(r=>r.type==='Incident').length;
+  document.getElementById('st-pend').textContent = queue.length;
+  const badge = document.getElementById('qbadge');
+  badge.style.display = queue.length ? 'flex' : 'none'; badge.textContent = queue.length;
+  document.getElementById('syncmsg').textContent = queue.length
+    ? `${queue.length} record${queue.length>1?'s':''} saved on this phone, waiting for internet.`
+    : 'No records waiting. Everything is synced.';
+  const tl = document.getElementById('todaylist');
+  tl.innerHTML = today.length ? today.slice().reverse().map(r=>qItemHTML(r,false)).join('') : 'Nothing recorded yet today.';
+}
+function qItemHTML(r, del){
+  const pos = r.type==='Recognition';
+  const what = pos ? `${esc(r.value)} · +${r.points}` : `${esc(r.behaviour)} · Tier ${r.tier}`;
+  return `<div class="qitem"><span class="tag ${pos?'pos':'neg'}">${pos?'&#11088;':'T'+(r.tier||'')}</span>
+    <div><b>${esc(r.student)}</b> <span class="meta">(${esc(r.className)})</span><br>
+    <span class="meta">${what}${r.synced?' · synced':''}</span></div>
+    ${del?`<button class="qdel" onclick="delQ('${r.id}')" title="Delete">&#10005;</button>`:''}</div>`;
+}
+
+/* ================= INCIDENT FLOW ================= */
+function startIncident(){
+  if(needSetup()) return;
+  inc = {id:uid(), type:'Incident', campus:settings.campus, teacher:settings.name,
+         className:'', student:'', behaviour:'', tier:0, interventions:[], parent:'No', notes:''};
+  incStep = 1; clearQ('inc-stu-q'); go('inc'); renderInc();
+}
+function incClasses(){ return Object.keys(ROSTER[inc.campus]||{}); }
+function renderInc(){
+  document.querySelectorAll('#scr-inc .step').forEach(x=>x.classList.remove('on'));
+  document.getElementById('inc-'+incStep).classList.add('on');
+  document.getElementById('inc-crumb').innerHTML = `Log incident — step <b>${incStep} of 5</b>`;
+  const sum=[]; if(inc.className)sum.push(inc.className); if(inc.student)sum.push(inc.student);
+  if(inc.behaviour)sum.push(inc.behaviour); if(inc.tier)sum.push('Tier '+inc.tier);
+  document.getElementById('inc-sum').innerHTML = sum.map(s=>`<span>${esc(s)}</span>`).join('');
+  const nx = document.getElementById('inc-next');
+  nx.textContent = incStep===5 ? 'Save record' : 'Next';
+  nx.disabled = !incStepValid();
+  if(incStep===1){
+    document.getElementById('inc-classes').innerHTML = incClasses().map(c=>
+      `<button class="chip neg ${inc.className===c?'on':''}" onclick="inc.className='${esc(c)}';inc.student='';clearQ('inc-stu-q');incStep=2;renderInc()">${esc(c)}</button>`).join('');
+  }
+  if(incStep===2) renderIncStudents();
+  if(incStep===3){
+    document.getElementById('inc-behaviours').innerHTML = BEHAVIOURS.map((b,i)=>
+      `<button class="chip ${inc.behaviour===b.n?'on neg':''}" onclick="pickBeh(${i})">${esc(b.n)}${b.t3only?' &#9888;&#65039;':''}</button>`).join('');
+    const b = BEHAVIOURS.find(x=>x.n===inc.behaviour);
+    document.getElementById('inc-def').innerHTML = b ? `<b>${esc(b.n)}:</b> ${esc(b.d)}` : 'Tap a behaviour to see its definition from the Silverleaf matrix.';
+  }
+  if(incStep===4) renderTiers();
+  if(incStep===5) renderIvs();
+}
+function incStepValid(){
+  if(incStep===1) return !!inc.className;
+  if(incStep===2) return !!inc.student;
+  if(incStep===3) return !!inc.behaviour;
+  if(incStep===4) return !!inc.tier;
+  if(incStep===5) return inc.tier===3 ? true : inc.interventions.length>0;
+  return false;
+}
+let incList = [];
+function renderIncStudents(){
+  const q = (document.getElementById('inc-stu-q').value||'').toLowerCase();
+  incList = (ROSTER[inc.campus][inc.className]||[]).filter(n=>n.toLowerCase().includes(q));
+  document.getElementById('inc-students').innerHTML = incList.map((n,i)=>
+    `<div class="stu ${inc.student===n?'on':''}" onclick="pickIncStu(${i})">${esc(n)}</div>`).join('') || '<div class="small">No students match.</div>';
+}
+function pickIncStu(i){ inc.student = incList[i]; incStep = 3; renderInc(); }
+function clearQ(id){ const el=document.getElementById(id); if(el) el.value=''; }
+function pickBeh(i){
+  const b = BEHAVIOURS[i];
+  inc.behaviour = b.n; inc.tier = 0; inc.interventions = [];
+  if(b.t3only){ inc.tier = 3; incStep = 5; } else { incStep = 4; }
+  renderInc();
+}
+function renderTiers(){
+  const b = BEHAVIOURS.find(x=>x.n===inc.behaviour) || {};
+  document.querySelectorAll('#inc-tiers .tier').forEach(el=>{
+    const t = +el.dataset.t;
+    el.className = 'tier' + (inc.tier===t?' on'+t:'') + (b.t3only && t<3?' dis':'');
+  });
+  const tn = document.getElementById('tiernote');
+  tn.innerHTML = inc.tier===3
+    ? `<div class="note alert">Tier 3 is <b>administrator managed</b> — this creates a Major referral.</div>`
+    : inc.tier===2 ? `<div class="note amber">Tier 2 — medium intensity. Usually includes contact home.</div>`
+    : inc.tier===1 ? `<div class="note">Tier 1 — low intensity, handled in class.</div>` : '';
+}
+function pickTier(t){ inc.tier=t; inc.interventions=[]; incStep=5; renderInc(); }
+function renderIvs(){
+  const b = BEHAVIOURS.find(x=>x.n===inc.behaviour);
+  const ivs = b ? (b['t'+inc.tier]||[]) : [];
+  document.getElementById('inc-ivs').innerHTML = ivs.map(iv=>{
+    const on = inc.interventions.includes(iv);
+    return `<div class="iv ${on?'on':''}" onclick="togIv(${JSON.stringify(iv).replace(/"/g,'&quot;')})">
+      <span class="box">${on?'&#10003;':''}</span><span>${esc(iv)}</span></div>`;
+  }).join('');
+  document.getElementById('adminbox').innerHTML = inc.tier===3 ? ADMIN_STEPS : '';
+  document.querySelectorAll('#inc-parent .chip').forEach(ch=>{
+    ch.classList.toggle('on', ch.dataset.v===inc.parent);
+    ch.onclick = ()=>{ inc.parent = ch.dataset.v; renderIvs(); document.getElementById('inc-next').disabled = !incStepValid(); };
+  });
+  document.getElementById('inc-next').disabled = !incStepValid();
+}
+function togIv(iv){
+  const i = inc.interventions.indexOf(iv);
+  if(i>=0) inc.interventions.splice(i,1); else inc.interventions.push(iv);
+  renderIvs();
+}
+function incBack(){
+  if(incStep===1){ go('home'); return; }
+  const b = BEHAVIOURS.find(x=>x.n===inc.behaviour);
+  if(incStep===5 && b && b.t3only){ incStep=3; } else incStep--;
+  renderInc();
+}
+function incNext(){
+  if(!incStepValid()) return;
+  if(incStep<5){ incStep++; renderInc(); return; }
+  inc.notes = document.getElementById('inc-notes').value.trim();
+  finishRecord(inc);
+  document.getElementById('inc-notes').value='';
+}
+
+/* ================= RECOGNITION FLOW ================= */
+function startRecognition(){
+  if(needSetup()) return;
+  rec = {id:uid(), type:'Recognition', campus:settings.campus, teacher:settings.name,
+         className:'', student:'', value:'', points:0, notes:''};
+  recStep = 1; clearQ('rec-stu-q'); go('rec'); renderRec();
+}
+function renderRec(){
+  document.querySelectorAll('#scr-rec .step').forEach(x=>x.classList.remove('on'));
+  document.getElementById('rec-'+recStep).classList.add('on');
+  document.getElementById('rec-crumb').innerHTML = `Recognise positive behaviour — step <b>${recStep} of 3</b>`;
+  const sum=[]; if(rec.className)sum.push(rec.className); if(rec.student)sum.push(rec.student);
+  if(rec.value)sum.push(rec.value); if(rec.points)sum.push('+'+rec.points);
+  document.getElementById('rec-sum').innerHTML = sum.map(s=>`<span>${esc(s)}</span>`).join('');
+  const nx = document.getElementById('rec-next');
+  nx.textContent = recStep===3 ? 'Save recognition' : 'Next';
+  nx.disabled = !recStepValid();
+  if(recStep===1){
+    document.getElementById('rec-classes').innerHTML = Object.keys(ROSTER[rec.campus]||{}).map(c=>
+      `<button class="chip ${rec.className===c?'on':''}" onclick="rec.className='${esc(c)}';rec.student='';clearQ('rec-stu-q');recStep=2;renderRec()">${esc(c)}</button>`).join('');
+  }
+  if(recStep===2) renderRecStudents();
+  if(recStep===3){
+    document.getElementById('rec-values').innerHTML = VALUES.map(v=>
+      `<button class="chip ${rec.value===v?'on':''}" onclick="rec.value='${v}';renderRec()">${v}</button>`).join('');
+    document.querySelectorAll('#rec-pts .pt').forEach(el=>el.classList.toggle('on', +el.dataset.p===rec.points));
+  }
+}
+function recStepValid(){
+  if(recStep===1) return !!rec.className;
+  if(recStep===2) return !!rec.student;
+  if(recStep===3) return !!rec.value && rec.points>0;
+  return false;
+}
+let recList = [];
+function renderRecStudents(){
+  const q = (document.getElementById('rec-stu-q').value||'').toLowerCase();
+  recList = (ROSTER[rec.campus][rec.className]||[]).filter(n=>n.toLowerCase().includes(q));
+  document.getElementById('rec-students').innerHTML = recList.map((n,i)=>
+    `<div class="stu ${rec.student===n?'on':''}" onclick="pickRecStu(${i})">${esc(n)}</div>`).join('') || '<div class="small">No students match.</div>';
+}
+function pickRecStu(i){ rec.student = recList[i]; recStep = 3; renderRec(); }
+function pickPts(p){ rec.points=p; renderRec(); }
+function recBack(){ if(recStep===1){ go('home'); return; } recStep--; renderRec(); }
+function recNext(){
+  if(!recStepValid()) return;
+  if(recStep<3){ recStep++; renderRec(); return; }
+  rec.notes = document.getElementById('rec-notes').value.trim();
+  finishRecord(rec);
+  document.getElementById('rec-notes').value='';
+}
+
+/* ================= SAVE / SYNC ================= */
+function finishRecord(r){
+  const now = new Date();
+  r.ts = now.toISOString();
+  r.localDate = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+  r.localTime = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  r.synced = false;
+  queue.push(r); save(LS.q, queue);
+  toast(r.type==='Recognition' ? `⭐ +${r.points} for ${r.student}` : `Incident saved for ${r.student}`);
+  go('home');
+  if(navigator.onLine && settings.url) syncNow(true);
+}
+function delQ(id){
+  queue = queue.filter(r=>r.id!==id); save(LS.q, queue);
+  renderQueue(); renderHome(); toast('Deleted');
+}
+function renderQueue(){
+  document.getElementById('qcount').textContent = queue.length;
+  document.getElementById('queuelist').innerHTML = queue.length
+    ? queue.slice().reverse().map(r=>qItemHTML(r,true)).join('')
+    : '<div class="small" style="margin-bottom:10px">Nothing waiting — all records are synced.</div>';
+  const sl = hist.slice(-15).reverse();
+  document.getElementById('syncedlist').innerHTML = sl.length ? sl.map(r=>qItemHTML(r,false)).join('') : 'Nothing synced yet.';
+}
+let syncing = false;
+async function syncNow(silent){
+  if(syncing) return;
+  if(!queue.length){ if(!silent) toast('Nothing to sync'); return; }
+  if(!settings.url){ if(!silent){ toast('Add the sync link in Settings first'); go('set'); } return; }
+  if(!navigator.onLine){ if(!silent) toast('No internet — records are safe on this phone'); return; }
+  syncing = true;
+  const btn = document.getElementById('syncbtn');
+  if(btn){ btn.disabled = true; btn.textContent = 'Syncing…'; }
+  try{
+    const batch = queue.slice(0, 100);
+    const res = await fetch(settings.url, {
+      method:'POST', redirect:'follow',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({action:'submit', records: batch})
+    });
+    const out = await res.json();
+    if(out && out.ok){
+      const sentIds = new Set(batch.map(r=>r.id));
+      const sent = queue.filter(r=>sentIds.has(r.id)).map(r=>({...r, synced:true}));
+      queue = queue.filter(r=>!sentIds.has(r.id));
+      hist = hist.concat(sent).slice(-200);
+      save(LS.q, queue); save(LS.hist, hist);
+      toast(`✅ Synced ${sent.length} record${sent.length>1?'s':''}`);
+      if(queue.length) setTimeout(()=>syncNow(true), 400);
+    } else {
+      toast('Sync problem: ' + ((out&&out.error)||'unexpected reply'));
+    }
+  }catch(e){
+    if(!silent) toast('Could not reach the server — will keep records safe');
+  }finally{
+    syncing = false;
+    if(btn){ btn.disabled = false; btn.innerHTML = '&#128260; Sync now'; }
+    renderHome(); if(document.getElementById('scr-queue').classList.contains('on')) renderQueue();
+  }
+}
+function exportCSV(){
+  const all = queue.concat(hist);
+  if(!all.length){ toast('Nothing to export'); return; }
+  const head = ['ID','Type','Date','Time','Campus','Class','Student','Behaviour/Value','Tier/Points','Interventions','ParentContact','Notes','Teacher','Synced'];
+  const rows = all.map(r=>[r.id,r.type,r.localDate,r.localTime,r.campus,r.className,r.student,
+    r.type==='Incident'?r.behaviour:r.value, r.type==='Incident'?r.tier:r.points,
+    (r.interventions||[]).join('; '), r.parent||'', r.notes||'', r.teacher, r.synced?'yes':'no']);
+  const csv = [head].concat(rows).map(rw=>rw.map(c=>'"'+String(c==null?'':c).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['﻿'+csv], {type:'text/csv'}));
+  a.download = 'Silverleaf_behaviour_backup_' + todayKey() + '.csv';
+  a.click();
+}
+
+/* ================= NET STATUS ================= */
+function netStatus(){
+  const el = document.getElementById('netdot');
+  if(navigator.onLine){ el.textContent = '● Online'; el.style.background = 'rgba(255,255,255,.16)'; }
+  else { el.textContent = '● Offline — saving to phone'; el.style.background = 'rgba(0,0,0,.28)'; }
+}
+window.addEventListener('online', ()=>{ netStatus(); if(queue.length && settings.url) syncNow(true); });
+window.addEventListener('offline', netStatus);
+
+/* ================= INSTALL (Add to Home screen) ================= */
+const IS_STANDALONE = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const IS_IOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+let deferredInstall = null;
+
+function hideInstall(remember){
+  document.getElementById('installbar').classList.remove('show');
+  if(remember) try{ localStorage.setItem('sla_bt_install_dismissed','1'); }catch(e){}
+}
+function maybeShowInstall(){
+  if(IS_STANDALONE) return;
+  let dismissed = false; try{ dismissed = localStorage.getItem('sla_bt_install_dismissed')==='1'; }catch(e){}
+  if(dismissed) return;
+  const bar = document.getElementById('installbar');
+  const msg = document.getElementById('installmsg');
+  const btn = document.getElementById('installbtn');
+  if(deferredInstall){                       // Android / Chrome
+    msg.textContent = 'Install this app on your phone — it works offline.';
+    btn.style.display = ''; bar.classList.add('show');
+  } else if(IS_IOS && location.protocol.startsWith('http')){   // iPhone / iPad Safari
+    msg.innerHTML = 'Install: tap <b>Share</b> \u2191 then <b>Add to Home Screen</b>.';
+    btn.style.display = 'none'; bar.classList.add('show');
+  }
+}
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault(); deferredInstall = e; maybeShowInstall();
+});
+document.getElementById('installbtn').addEventListener('click', async () => {
+  if(!deferredInstall) return;
+  deferredInstall.prompt();
+  const choice = await deferredInstall.userChoice;
+  if(choice && choice.outcome === 'accepted'){ hideInstall(false); toast('Installed — find it on your home screen'); }
+  deferredInstall = null;
+});
+window.addEventListener('appinstalled', () => hideInstall(false));
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+setTimeout(maybeShowInstall, 1200);
+
+/* ================= INIT ================= */
+netStatus(); updateHdr();
+if(!settings.name || !settings.campus){ go('set'); } else { go('home'); }
+</script>
+</body>
+</html>
