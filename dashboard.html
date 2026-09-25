@@ -100,10 +100,34 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;}
 .cert .tag{margin-top:10px;font-size:11px;color:#818283;font-style:italic;}
 .cert .sig{margin-top:18px;display:flex;justify-content:space-between;font-size:11.5px;color:#818283;}
 .cert .sig span{border-top:1px solid #c3c2b7;padding-top:4px;width:44%;}
+.certbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;}
+.certbar .grow{flex:1;}
+.seg{display:inline-flex;border:1.5px solid var(--grid);border-radius:99px;overflow:hidden;}
+.segb{border:none;background:var(--surface-1);color:var(--ink-2);padding:7px 14px;font-size:13px;font-weight:600;}
+.segb.on{background:var(--green);color:#fff;}
+#certq{padding:8px 12px;border:1.5px solid var(--grid);border-radius:9px;font-size:13px;min-width:200px;background:var(--surface-1);color:var(--ink);}
+.btn.sm{padding:8px 13px;font-size:13px;}
+.btn[disabled]{opacity:.55;cursor:progress;}
+.certhint{color:var(--ink-3);font-size:12.5px;margin-bottom:12px;}
+#certmsg{font-size:12.5px;font-weight:600;color:var(--green);min-height:18px;margin-bottom:6px;}
+@media (prefers-color-scheme: dark){ :root:where(:not([data-theme="light"])) #certmsg{color:var(--lblue);} }
+.certwrap{display:flex;flex-direction:column;gap:8px;}
+.certact{display:flex;gap:8px;justify-content:center;}
+.certact button{flex:1;max-width:190px;border:1.5px solid var(--grid);background:var(--surface-1);color:var(--ink);border-radius:9px;padding:8px 10px;font-size:13px;font-weight:700;}
+.certact button.pdf{background:var(--green);border-color:var(--green);color:#fff;}
+.cert .badge{position:absolute;top:10px;right:10px;background:var(--gold);color:var(--green);font-size:10.5px;font-weight:800;border-radius:99px;padding:3px 9px;letter-spacing:.3px;}
+.cert .per{font-size:11px;color:#818283;margin-top:6px;}
+#printzone{display:none;}
 @media print{
-  header,.filters,.card.no-print,.connect,.btn,.tablink{display:none !important;}
+  header,.filters,.card.no-print,.connect,.btn,.tablink,.no-print{display:none !important;}
   body{background:#fff;} .card{border:none;}
-  .print-only-certs .card:not(#certcard){display:none;}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  body.print-dash #certcard{display:none !important;}
+  body.print-certs > *:not(#printzone){display:none !important;}
+  body.print-certs{margin:0;padding:0;}
+  body.print-certs #printzone{display:block;}
+  #printzone img{display:block;width:297mm;height:209mm;margin:0;object-fit:contain;break-after:page;page-break-after:always;}
+  #printzone img:last-child{break-after:auto;page-break-after:auto;}
 }
 </style>
 </head>
@@ -134,7 +158,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;}
     <button class="fchip on" data-r="all" onclick="setRange('all')">Term to date</button>
     <select id="f-campus" onchange="render()"><option value="">All campuses</option></select>
     <select id="f-class" onchange="render()"><option value="">All classes</option></select>
-    <button class="btn ghost" style="margin-left:auto" onclick="window.print()">🖨 Print</button>
+    <button class="btn ghost" style="margin-left:auto" onclick="printDashboard()" title="Prints the charts and tables (certificates have their own buttons below)">🖨 Print dashboard</button>
   </div>
 
   <div class="kpis" id="kpis"></div>
@@ -165,14 +189,27 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;}
 
   <div class="card"><h2>📣 Assembly shout-outs — top recognitions in period</h2><div id="shouts"></div></div>
 
-  <div class="card" id="certcard"><h2>🏆 Certificates — top merit student per class (period)
-    <button class="tablink no-print" onclick="window.print()">print certificates</button></h2>
-    <div class="small no-print" style="color:var(--ink-3);font-size:12.5px;margin-bottom:12px">Tip: choose a campus above, then print this section for award assemblies.</div>
+  <div class="card" id="certcard"><h2>🏆 Certificates of recognition</h2>
+    <div class="certbar no-print">
+      <div class="seg" role="group" aria-label="Which students">
+        <button class="segb on" data-m="top" onclick="setCertMode('top')">Top student per class</button>
+        <button class="segb" data-m="all" onclick="setCertMode('all')">Any recognised student</button>
+      </div>
+      <input type="search" id="certq" placeholder="Search student or class…" oninput="renderCerts()" aria-label="Search certificates">
+      <span class="grow"></span>
+      <button class="btn ghost sm certall" onclick="printCerts(CERTS)">🖨 Print all (<span class="certn">0</span>)</button>
+      <button class="btn sm certall" onclick="downloadCerts(CERTS)">⬇ Download all (PDF)</button>
+    </div>
+    <div class="certhint no-print">Each certificate comes out on its own A4 landscape page. Use the date range, campus and class filters above to narrow the list, or search for one student.</div>
+    <div id="certmsg" class="no-print" aria-live="polite"></div>
     <div class="certgrid" id="certs"></div>
+    <div id="certmore" class="no-print" style="text-align:center;margin-top:12px"></div>
   </div>
 </div>
 </div>
 <div id="tooltip"></div>
+<div id="printzone" aria-hidden="true"></div>
+<style id="pagestyle"></style>
 
 <script>
 "use strict";
@@ -420,25 +457,265 @@ function render(){
     g.tops.map(t=>`<div class="shout"><b>${esc(t.s)}</b> <span class="meta">(${esc(t.cls)})</span> — ${t.pts} pts · ${esc(t.val)}${t.note?`<div class="meta">“${esc(t.note)}”</div>`:''}</div>`).join('')+'</div>'
   ).join('') : '<div class="empty">No recognitions yet in this period.</div>';
 
-  /* certificates: top merit student per class */
-  const perClass = Object.entries(byKey(rec, r=>[r.Campus,r.Class].join('|'))).map(([k,a])=>{
+  /* certificates */
+  buildCerts(rec);
+}
+/* ================= certificates: build, preview, print, PDF ================= */
+let CERT_ALL = [], CERTS = [], certMode = 'top', certShow = 24;
+const PERIOD_PHRASE = {week:'this week', '7':'over the last 7 days', '30':'over the last 30 days', all:'this term'};
+const PERIOD_NAME = {week:'This week', '7':'Last 7 days', '30':'Last 30 days', all:'Term to date'};
+const clsName = c => String(c||'').replace(/_/g,' ');
+
+function buildCerts(rec){
+  // one entry per student (per campus + class) with their points, top value and best note
+  const list = Object.entries(byKey(rec, r=>[r.Campus,r.Class,r.Student].join('|'))).map(([k,a])=>{
     const p = k.split('|');
-    const best = Object.entries(byKey(a, r=>r.Student))
-      .map(([s,rows])=>({s, pts:rows.reduce((t,r)=>t+(+r.Points||0),0), val:counts(rows,r=>r.Value)[0][0]}))
-      .sort((x,y)=>y.pts-x.pts)[0];
-    return {campus:p[0], cls:p[1], ...best};
-  }).sort((a,b)=> a.campus.localeCompare(b.campus) || a.cls.localeCompare(b.cls));
-  $('certs').innerHTML = perClass.length ? perClass.map(c=>
-    `<div class="cert"><div class="mark">${LOGOMARK}</div>
+    const best = a.slice().sort((x,y)=>(+y.Points||0)-(+x.Points||0) || String(y.Notes||'').length-String(x.Notes||'').length)[0];
+    return {campus:p[0], cls:p[1], s:p[2], n:a.length,
+      pts:a.reduce((t,r)=>t+(+r.Points||0),0),
+      val:counts(a,r=>r.Value)[0][0], note:String(best.Notes||'').trim()};
+  });
+  // mark the top merit student of each class
+  const topOf = {};
+  list.forEach(c=>{ const k=c.campus+'|'+c.cls; if(!topOf[k] || c.pts>topOf[k].pts) topOf[k]=c; });
+  Object.values(topOf).forEach(c=>c.top=true);
+  CERT_ALL = list.sort((a,b)=> a.campus.localeCompare(b.campus) || a.cls.localeCompare(b.cls) || b.pts-a.pts || a.s.localeCompare(b.s));
+  certShow = 24;
+  renderCerts();
+}
+function setCertMode(m){
+  certMode = m; certShow = 24;
+  document.querySelectorAll('.segb').forEach(b=>b.classList.toggle('on', b.dataset.m===m));
+  renderCerts();
+}
+function certReason(c){
+  const ph = PERIOD_PHRASE[range]||'this term';
+  return c.top
+    ? `For consistently showing ${c.val} and earning the most merit points in the class ${ph}.`
+    : `For consistently showing ${c.val} and positive behaviour ${ph}.`;
+}
+function renderCerts(){
+  const q = ($('certq').value||'').trim().toLowerCase();
+  CERTS = CERT_ALL.filter(c => (certMode==='all' || c.top) &&
+    (!q || (c.s+' '+c.cls+' '+clsName(c.cls)+' '+c.campus).toLowerCase().includes(q)));
+  document.querySelectorAll('.certn').forEach(e=>e.textContent = CERTS.length);
+  document.querySelectorAll('.certall').forEach(b=>b.disabled = !CERTS.length);
+  const shown = CERTS.slice(0, certShow);
+  $('certs').innerHTML = shown.length ? shown.map((c,i)=>
+    `<div class="certwrap"><div class="cert">${certMode==='all'&&c.top?'<span class="badge">TOP OF CLASS</span>':''}<div class="mark">${LOGOMARK}</div>
      <div class="brand">Silverleaf<small>ACADEMY</small></div>
      <div class="ttl">Certificate of Recognition</div>
-     <div class="name">${esc(c.s)}</div><div class="cls">${esc(c.cls)} · ${esc(c.campus)} Campus</div>
-     <div class="why">For consistently showing <b>${esc(c.val)}</b> — top merit student of the class this period.</div>
-     <div class="pts">⭐ ${c.pts} merit points</div>
+     <div class="name">${esc(c.s)}</div><div class="cls">${esc(clsName(c.cls))} · ${esc(c.campus)} Campus</div>
+     <div class="why">${esc(certReason(c)).replace(esc(c.val), '<b>'+esc(c.val)+'</b>')}</div>
+     <div class="pts">⭐ ${c.pts} merit point${c.pts===1?'':'s'}</div>
+     <div class="per">${PERIOD_NAME[range]||''}</div>
      <div class="tag">The Future Starts Here</div>
-     <div class="sig"><span>Class Teacher</span><span>Principal</span></div></div>`
-  ).join('') : '<div class="empty">Certificates appear once recognitions are logged.</div>';
+     <div class="sig"><span>Class Teacher</span><span>Principal</span></div></div>
+     <div class="certact no-print"><button onclick="printCerts([CERTS[${i}]])" aria-label="Print certificate for ${esc(c.s)}">🖨 Print</button><button class="pdf" onclick="downloadCerts([CERTS[${i}]])" aria-label="Download certificate for ${esc(c.s)} as PDF">⬇ PDF</button></div></div>`
+  ).join('') : `<div class="empty">${CERT_ALL.length ? 'No certificates match your search.' : 'Certificates appear once recognitions are logged.'}</div>`;
+  $('certmore').innerHTML = CERTS.length > certShow
+    ? `<button class="btn ghost sm" onclick="certShow=Infinity;renderCerts()">Show all ${CERTS.length} certificates</button>` : '';
 }
+function certMsg(t){ $('certmsg').textContent = t||''; }
+function certBusy(on){ document.querySelectorAll('.certall,.certact button').forEach(b=>b.disabled=on); }
+
+/* ---- drawing (A4 landscape, ~212 dpi) ---- */
+const CW = 2480, CH = 1754;
+const C_NAVY='#002368', C_GOLD='#FFC952', C_GOLDL='#FFF7E5', C_LB30='#D9ECF9', C_LB='#80BFEC', C_SILVER='#818283', C_INK='#3d3d3b';
+const SANS = 'Montserrat, Helvetica, Arial, sans-serif', SERIF = 'Georgia, "Times New Roman", serif';
+let LOGO_PATHS = null;
+function logoPaths(){
+  if(LOGO_PATHS) return LOGO_PATHS;
+  const doc = new DOMParser().parseFromString(LOGOMARK, 'image/svg+xml');
+  LOGO_PATHS = [...doc.querySelectorAll('path,polygon')].map(el=>{
+    if(el.tagName.toLowerCase()==='path') return new Path2D(el.getAttribute('d'));
+    const n = el.getAttribute('points').trim().split(/[\s,]+/).map(Number); let d='';
+    for(let i=0;i+1<n.length;i+=2) d += (i?'L':'M')+n[i]+' '+n[i+1];
+    return new Path2D(d+'Z');
+  });
+  return LOGO_PATHS;
+}
+function drawLogo(x, cx, top, h, color){
+  const k = h/383; x.save(); x.translate(cx - 297*k/2 - 268*k, top - 243*k); x.scale(k,k);
+  x.fillStyle = color; logoPaths().forEach(p=>x.fill(p)); x.restore();
+}
+function spaced(x, text, cx, y, sp){        // centred text with letter-spacing (works on all browsers)
+  const ch = [...text], w = ch.reduce((t,c)=>t+x.measureText(c).width,0) + sp*(ch.length-1);
+  let px = cx - w/2; x.textAlign='left';
+  ch.forEach(c=>{ x.fillText(c, px, y); px += x.measureText(c).width + sp; });
+  x.textAlign='center'; return w;
+}
+function fitFont(x, text, style, size, family, maxW){
+  do{ x.font = `${style} ${size}px ${family}`; size -= 4; } while(x.measureText(text).width > maxW && size > 40);
+}
+function wrapLines(x, text, maxW){
+  const words = text.split(/\s+/), lines = []; let line = '';
+  words.forEach(w=>{ const t = line ? line+' '+w : w; if(x.measureText(t).width > maxW && line){ lines.push(line); line = w; } else line = t; });
+  if(line) lines.push(line); return lines;
+}
+function star(x, cx, cy, r, color){
+  x.beginPath();
+  for(let i=0;i<10;i++){ const a = -Math.PI/2 + i*Math.PI/5, rr = i%2 ? r*0.45 : r; x.lineTo(cx+rr*Math.cos(a), cy+rr*Math.sin(a)); }
+  x.closePath(); x.fillStyle = color; x.fill();
+}
+function roundRect(x, X, Y, W, H, r){ x.beginPath(); x.moveTo(X+r,Y); x.arcTo(X+W,Y,X+W,Y+H,r); x.arcTo(X+W,Y+H,X,Y+H,r); x.arcTo(X,Y+H,X,Y,r); x.arcTo(X,Y,X+W,Y,r); x.closePath(); }
+const longDate = d => d.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+
+function drawCert(c){
+  const cv = document.createElement('canvas'); cv.width = CW; cv.height = CH;
+  const x = cv.getContext('2d'), cx = CW/2;
+  x.fillStyle = '#fff'; x.fillRect(0,0,CW,CH);
+  // soft brand shapes in the corners
+  x.save(); x.beginPath(); x.rect(70,70,CW-140,CH-140); x.clip();
+  x.fillStyle = C_LB30; x.beginPath(); x.arc(40, 40, 430, 0, Math.PI*2); x.fill();
+  x.fillStyle = C_GOLDL; x.beginPath(); x.arc(CW-20, CH-20, 520, 0, Math.PI*2); x.fill();
+  x.globalAlpha = .045; drawLogo(x, CW-360, CH-600, 440, C_NAVY); x.globalAlpha = 1;
+  x.restore();
+  // frame: navy outer, gold inner
+  x.strokeStyle = C_NAVY; x.lineWidth = 22; x.strokeRect(70,70,CW-140,CH-140);
+  x.strokeStyle = C_GOLD; x.lineWidth = 7; x.strokeRect(112,112,CW-224,CH-224);
+  [[112,112],[CW-112,112],[112,CH-112],[CW-112,CH-112]].forEach(([px,py])=>{
+    x.save(); x.translate(px,py); x.rotate(Math.PI/4); x.fillStyle=C_NAVY; x.fillRect(-20,-20,40,40); x.restore(); });
+
+  x.textAlign = 'center'; x.textBaseline = 'alphabetic';
+  drawLogo(x, cx, 180, 220, C_NAVY);
+  x.fillStyle = C_NAVY; x.font = `700 92px ${SERIF}`; x.fillText('Silverleaf', cx, 505);
+  x.fillStyle = C_SILVER; x.font = `600 30px ${SANS}`; spaced(x, 'ACADEMY', cx, 555, 16);
+
+  x.fillStyle = C_NAVY; x.font = `800 58px ${SANS}`;
+  const tw = spaced(x, 'CERTIFICATE OF RECOGNITION', cx, 690, 9);
+  x.strokeStyle = C_GOLD; x.lineWidth = 6;
+  x.beginPath(); x.moveTo(cx-tw/2-230, 670); x.lineTo(cx-tw/2-50, 670); x.moveTo(cx+tw/2+50, 670); x.lineTo(cx+tw/2+230, 670); x.stroke();
+
+  x.fillStyle = C_SILVER; x.font = `italic 42px ${SERIF}`; x.fillText('This certificate is proudly presented to', cx, 800);
+
+  x.fillStyle = C_NAVY; fitFont(x, c.s, '700', 150, SERIF, 1850); x.fillText(c.s, cx, 975);
+  const nw = Math.min(1900, Math.max(900, x.measureText(c.s).width + 160));
+  x.strokeStyle = C_GOLD; x.lineWidth = 6; x.beginPath(); x.moveTo(cx-nw/2, 1018); x.lineTo(cx+nw/2, 1018); x.stroke();
+
+  x.fillStyle = C_SILVER; x.font = `600 40px ${SANS}`; x.fillText(`${clsName(c.cls)}  ·  ${c.campus} Campus`, cx, 1088);
+
+  x.fillStyle = C_INK; x.font = `500 46px ${SANS}`;
+  let y = 1185; wrapLines(x, certReason(c), 1750).slice(0,2).forEach(l=>{ x.fillText(l, cx, y); y += 62; });
+  if(c.note){
+    const n = c.note.length > 95 ? c.note.slice(0,94)+'…' : c.note;
+    x.fillStyle = C_SILVER; x.font = `italic 38px ${SERIF}`; x.fillText(`“${n}”`, cx, y+4); y += 62;
+  }
+  // gold points pill
+  const label = `${c.pts} MERIT POINT${c.pts===1?'':'S'}`;
+  x.font = `800 44px ${SANS}`; const lw = x.measureText(label).width;
+  const pw = lw + 150, ph = 92, py = Math.min(y + 8, 1372);
+  x.fillStyle = C_GOLD; roundRect(x, cx-pw/2, py, pw, ph, ph/2); x.fill();
+  star(x, cx-pw/2+70, py+ph/2, 28, C_NAVY);
+  x.fillStyle = C_NAVY; x.textAlign='left'; x.fillText(label, cx-pw/2+115, py+ph/2+16); x.textAlign='center';
+
+  // signatures + date
+  const sy = 1545;
+  x.strokeStyle = '#b9b8b0'; x.lineWidth = 3;
+  [[330,880],[CW-880,CW-330]].forEach(([a,b])=>{ x.beginPath(); x.moveTo(a,sy); x.lineTo(b,sy); x.stroke(); });
+  x.fillStyle = C_SILVER; x.font = `600 32px ${SANS}`;
+  x.fillText('Class Teacher', 605, sy+48); x.fillText('Principal', CW-605, sy+48);
+  x.fillStyle = C_INK; x.font = `600 32px ${SANS}`;
+  x.fillText(`${PERIOD_NAME[range]||''}  ·  Awarded ${longDate(new Date())}`, cx, sy-8);
+  x.fillStyle = C_NAVY; x.font = `italic 40px ${SERIF}`; x.fillText('The Future Starts Here', cx, sy+50);
+  return cv;
+}
+async function certFonts(){
+  try{ await Promise.race([
+    Promise.all(['500 46px Montserrat','600 32px Montserrat','800 58px Montserrat'].map(f=>document.fonts.load(f))),
+    new Promise(r=>setTimeout(r,2500))]); }catch(e){}
+}
+const pause = () => new Promise(r=>setTimeout(r,0));
+const toBlob = cv => new Promise(r=>cv.toBlob(r,'image/jpeg',0.92));
+const safeName = s => String(s).replace(/[\\/:*?"<>|]+/g,'').replace(/\s+/g,' ').trim();
+
+/* ---- print: only the chosen certificate(s), one per A4 landscape page ---- */
+let printURLs = [];
+function clearPrint(){
+  document.body.classList.remove('print-certs','print-dash');
+  $('pagestyle').textContent = '';
+  $('printzone').innerHTML = '';
+  printURLs.forEach(u=>URL.revokeObjectURL(u)); printURLs = [];
+}
+window.addEventListener('afterprint', ()=>setTimeout(clearPrint, 300));
+function printDashboard(){
+  clearPrint();
+  document.body.classList.add('print-dash');
+  window.print();
+}
+async function printCerts(list){
+  list = (list||[]).filter(Boolean); if(!list.length) return;
+  clearPrint(); certBusy(true);
+  try{
+    await certFonts();
+    const zone = $('printzone');
+    for(let i=0;i<list.length;i++){
+      certMsg(`Preparing certificate ${i+1} of ${list.length} for printing…`); await pause();
+      const url = URL.createObjectURL(await toBlob(drawCert(list[i]))); printURLs.push(url);
+      const img = new Image(); img.alt = 'Certificate'; img.src = url; zone.appendChild(img);
+    }
+    await Promise.all([...zone.querySelectorAll('img')].map(im=>im.decode ? im.decode().catch(()=>{}) : null));
+    $('pagestyle').textContent = '@page{size:A4 landscape;margin:0;}';
+    document.body.classList.add('print-certs');
+    certMsg(list.length===1 ? `Printing certificate for ${list[0].s}…` : `Printing ${list.length} certificates…`);
+    setTimeout(()=>{ window.print(); setTimeout(()=>certMsg(''), 1500); }, 60);
+  }catch(e){ certMsg('❌ Could not prepare the certificate: '+e.message); clearPrint(); }
+  finally{ certBusy(false); }
+}
+
+/* ---- download as PDF (jsPDF, loaded only when needed) ---- */
+let jsPDFLoading = null;
+function loadJsPDF(){
+  if(window.jspdf && window.jspdf.jsPDF) return Promise.resolve(window.jspdf.jsPDF);
+  if(!jsPDFLoading) jsPDFLoading = new Promise((res,rej)=>{
+    const sc = document.createElement('script');
+    sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    sc.onload = ()=> window.jspdf ? res(window.jspdf.jsPDF) : rej(new Error('PDF tool failed to load'));
+    sc.onerror = ()=>{ jsPDFLoading = null; rej(new Error('offline')); };
+    document.head.appendChild(sc);
+  });
+  return jsPDFLoading;
+}
+function saveBlob(blob, name){
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+}
+async function downloadCerts(list){
+  list = (list||[]).filter(Boolean); if(!list.length) return;
+  certBusy(true);
+  const today = iso(new Date());
+  const fname = list.length===1
+    ? safeName(`Certificate - ${list[0].s} - ${clsName(list[0].cls)}`)+'.pdf'
+    : safeName(`Silverleaf Certificates - ${$('f-campus').value||'All campuses'}${$('f-class').value?' - '+clsName($('f-class').value):''} - ${today}`)+'.pdf';
+  try{
+    certMsg('Preparing PDF…');
+    await certFonts();
+    let JsPDF;
+    try{ JsPDF = await loadJsPDF(); }
+    catch(e){
+      // offline fallback: save the certificate as an image instead
+      if(list.length===1){
+        saveBlob(await toBlob(drawCert(list[0])), fname.replace(/\.pdf$/,'.jpg'));
+        certMsg('No internet for the PDF tool — saved the certificate as an image (JPG) instead. It prints the same.');
+      } else {
+        certMsg('❌ PDF needs an internet connection. Use “Print all” and choose “Save as PDF” instead.');
+      }
+      return;
+    }
+    const pdf = new JsPDF({orientation:'landscape', unit:'mm', format:'a4', compress:true});
+    for(let i=0;i<list.length;i++){
+      certMsg(`Adding certificate ${i+1} of ${list.length} to the PDF…`); await pause();
+      if(i) pdf.addPage('a4','landscape');
+      pdf.addImage(drawCert(list[i]).toDataURL('image/jpeg',0.9), 'JPEG', 0, 0, 297, 210, undefined, 'FAST');
+    }
+    pdf.setProperties({title: fname.replace(/\.pdf$/,''), author:'Silverleaf Academy', creator:'Silverleaf Behaviour Tracker'});
+    saveBlob(pdf.output('blob'), fname);
+    certMsg(`✅ Downloaded “${fname}”.`);
+    setTimeout(()=>certMsg(''), 6000);
+  }catch(e){ certMsg('❌ Could not create the PDF: '+e.message); }
+  finally{ certBusy(false); }
+}
+
 function kpi(v, label, color, icon, sub){
   return `<div class="kpi">${icon?`<span class="icon">${icon}</span>`:''}<b style="color:${color}">${v}</b><small>${label}${sub?` · ${sub}`:''}</small></div>`;
 }
