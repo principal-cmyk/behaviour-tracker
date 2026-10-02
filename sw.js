@@ -1,7 +1,7 @@
 /* Silverleaf Behaviour Tracker — service worker
  * Cache-first app shell so the app opens fully offline once installed.
  * Bump VERSION whenever index.html changes so phones pick up the update. */
-const VERSION = 'sbt-v2';
+const VERSION = 'sbt-v4';
 const SHELL = [
   './',
   './index.html',
@@ -28,16 +28,27 @@ self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return; // sync POSTs go straight to the network
 
-  // App navigation: serve the cached shell, refresh it in the background
   if (req.mode === 'navigate') {
+    const path = new URL(req.url).pathname;
+    // Teacher app (/ or /index.html): serve the cached shell instantly, refresh it in the background
+    if (/\/(index\.html)?$/.test(path)) {
+      e.respondWith(
+        caches.match('./index.html').then((cached) => {
+          const fresh = fetch(req).then((res) => {
+            if (res && res.ok) { const copy = res.clone(); caches.open(VERSION).then((c) => c.put('./index.html', copy)); }
+            return res;
+          }).catch(() => cached);
+          return cached || fresh;
+        })
+      );
+      return;
+    }
+    // Any other page (e.g. dashboard.html): network first, cached copy only when offline
     e.respondWith(
-      caches.match('./index.html').then((cached) => {
-        const fresh = fetch(req).then((res) => {
-          if (res && res.ok) caches.open(VERSION).then((c) => c.put('./index.html', res.clone()));
-          return res;
-        }).catch(() => cached);
-        return cached || fresh;
-      })
+      fetch(req).then((res) => {
+        if (res && res.ok) { const copy = res.clone(); caches.open(VERSION).then((c) => c.put(req, copy)); }
+        return res;
+      }).catch(() => caches.match(req))
     );
     return;
   }
